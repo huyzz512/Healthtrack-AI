@@ -1,6 +1,6 @@
 # Android–Backend integration contract
 
-Status: Foundation draft, shared ownership.
+Status: **Foundation v0.1 released — 2026-11-20**, shared ownership.
 
 ## Transport and root
 
@@ -93,6 +93,21 @@ Units are explicit per DTO. Semantic fields are preferred where unambiguous (`he
 
 Canonical storage units include cm, kg, kg/m², bpm, mmHg, °C, breaths/minute, percent, steps, minutes, millilitres, and kcal. Fahrenheit input converts to Celsius before server persistence when supported.
 
+## Foundation shared enums
+
+These wire values are canonical. Persistence and Android models use the same names, and Android maps any future unknown value to `UNKNOWN` without crashing. The enums reserve terminology for later business endpoint contracts; they do not make those endpoints executable in Foundation.
+
+```text
+DataSource: USER_INPUT | HEALTH_CONNECT | IMPORTED | SYSTEM_GENERATED
+MoodType: HAPPY | NORMAL | SAD | STRESSED | ANXIOUS
+AlertSeverity: INFO | WARNING | CRITICAL
+ReportStatus: REQUESTED | GENERATING | READY | FAILED
+ConsentType: AI_HEALTH_CONTEXT | AI_MEDICAL_DOCUMENT | AI_REPORT_SUMMARY
+ConsentStatus: GRANTED | REVOKED
+```
+
+`MANUAL` from the business analysis maps to `USER_INPUT`. `CRITICAL` is an informational severity label only; it does not claim diagnosis, medical-grade triage, emergency monitoring, or emergency dispatch.
+
 ## Authentication foundation
 
 - Access token: Bearer JWT, 15-minute lifetime.
@@ -161,4 +176,6 @@ Backend aggregates; Android renders. Missing data remains missing rather than be
 ## Compatibility
 
 Android must safely handle unknown enum values. Removing/renaming fields, changing types/semantics, changing auth, errors, time, or units is breaking. Adding an optional field is non-breaking only after Android compatibility is confirmed.
+
+Foundation v0.1 is the initial released contract baseline. Later changes follow the contract-change process and changelog in `docs/governance/`.
 

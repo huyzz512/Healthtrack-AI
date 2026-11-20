@@ -13,11 +13,13 @@ const { DatabaseHealthService } = await import(
 
 describe('GET /api/v1/health', () => {
   let app;
+  let databaseConnected;
 
   beforeAll(async () => {
+    databaseConnected = true;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(DatabaseHealthService)
-      .useValue({ isConnected: async () => true })
+      .useValue({ isConnected: async () => databaseConnected })
       .compile();
 
     app = moduleRef.createNestApplication({ logger: false });
@@ -41,5 +43,25 @@ describe('GET /api/v1/health', () => {
         version: 'foundation-v0.1',
       },
     });
+  });
+
+  it('returns the approved sanitized error envelope when the database is unavailable', async () => {
+    databaseConnected = false;
+    const address = app.getHttpServer().address();
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/health`, {
+      headers: { 'x-request-id': 'foundation-test-trace' },
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get('x-request-id')).toBe('foundation-test-trace');
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'DATABASE_UNAVAILABLE',
+        message: 'Database connectivity check failed.',
+        details: null,
+        traceId: 'foundation-test-trace',
+      },
+    });
+    databaseConnected = true;
   });
 });

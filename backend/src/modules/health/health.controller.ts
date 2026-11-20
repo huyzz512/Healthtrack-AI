@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiServiceUnavailableResponse, ApiTags } f
 
 import { HealthService } from './health.service.js';
 import type { HealthStatus } from './health.service.js';
+import { ApiErrorEnvelopeDto, HealthSuccessEnvelopeDto } from './health.dto.js';
 
 @ApiTags('health')
 @Controller('health')
@@ -11,8 +12,14 @@ export class HealthController {
 
   @Get()
   @ApiOperation({ summary: 'Check application and database health' })
-  @ApiOkResponse({ description: 'Application and database are available.' })
-  @ApiServiceUnavailableResponse({ description: 'Database is unavailable.' })
+  @ApiOkResponse({
+    description: 'Application and database are available.',
+    type: HealthSuccessEnvelopeDto,
+  })
+  @ApiServiceUnavailableResponse({
+    description: 'Database is unavailable.',
+    type: ApiErrorEnvelopeDto,
+  })
   getHealth(): Promise<HealthStatus> {
     return this.healthService.getStatus();
   }

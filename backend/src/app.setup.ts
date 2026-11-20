@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { ConsoleLogger, INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { OpenAPIObject } from '@nestjs/swagger';
 
 import { API_PREFIX } from './common/constants/api.constants.js';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
@@ -9,7 +10,7 @@ import { ResponseEnvelopeInterceptor } from './common/interceptors/response-enve
 export function configureApplication(
   app: INestApplication,
   logger: ConsoleLogger,
-): void {
+): OpenAPIObject {
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalPipes(
     new ValidationPipe({
@@ -35,4 +36,5 @@ export function configureApplication(
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
+  return document;
 }

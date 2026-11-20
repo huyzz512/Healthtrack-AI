@@ -17,6 +17,9 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
+    "openapi:generate": "npm run build && node scripts/generate-openapi.mjs",
+    "openapi:check": "npm run build && node scripts/generate-openapi.mjs --check",
+    "integration:verify": "npm run build && node scripts/verify-integration.mjs",
     "storage:verify": "npm run build && node scripts/verify-storage.mjs"
   },
   "dependencies": {
@@ -50,5 +53,8 @@
     "prisma": "7.10.1",
     "typescript": "6.0.2",
     "typescript-eslint": "8.73.0"
+  },
+  "overrides": {
+    "effect": "3.22.5"
   }
 }
