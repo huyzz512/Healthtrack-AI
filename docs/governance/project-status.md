@@ -2,7 +2,7 @@
 
 ## Current stage
 
-Foundation v0.1 — release candidate; local acceptance passed, publication/hosted CI pending.
+Foundation v0.1 — **COMPLETE AND VERIFIED — 2026-11-20**.
 
 ## Source documents
 
@@ -33,7 +33,7 @@ The source DOCX remains outside the repository and should be archived in the pro
 
 ## In progress
 
-- Publish the Foundation completion changes and verify the first GitHub-hosted CI run.
+- None within Foundation v0.1. Later business-flow implementation requires separately approved development tasks.
 
 ## Blockers
 
@@ -41,5 +41,5 @@ The source DOCX remains outside the repository and should be archived in the pro
 
 ## Verification
 
-Backend lint, typecheck, build, 12 tests, Prisma validation/migration status, PostgreSQL connectivity, health endpoint behavior, Swagger/OpenAPI loading and drift, and private storage round-trip have been verified locally. Android `assembleDebug`, `testDebugUnitTest`, and `lintDebug` pass locally. Phase L and local Phase N acceptance are complete; hosted Phase M verification will be recorded after publication.
+Backend lint, typecheck, build, 12 tests, production dependency audit, Prisma validation/migration status, PostgreSQL connectivity, health endpoint behavior, Swagger/OpenAPI loading and drift, and private storage round-trip have been verified locally. Android `assembleDebug`, `testDebugUnitTest`, and `lintDebug` pass locally. GitHub-hosted Foundation CI run `44735597051` passed both Backend/PostgreSQL/contract and Android jobs. Phases L–N and Foundation v0.1 acceptance are complete.
 

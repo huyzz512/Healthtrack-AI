@@ -17,7 +17,7 @@ Scope: repository/tooling, governance, architecture, initial contract, persisten
 | Provider boundaries | AI/OTP/notification/PDF tests and private S3 write/read/delete | PASS |
 | Android | Debug APK assembly, unit tests, and lint; 61 Gradle tasks successful | PASS |
 | CI definition | Backend/PostgreSQL/contract and Android jobs in `foundation-ci.yml` | PASS |
-| GitHub-hosted CI | First workflow run after publication | PENDING PUBLICATION |
+| GitHub-hosted CI | Run `44735597051` for commit `56cd134` | PASS — Backend and Android |
 
 ## Contract alignment
 
@@ -36,6 +36,7 @@ On 2026-11-20:
 - Database health endpoint and Swagger runtime verification: passed.
 - Silo private-bucket write/read/delete verification: passed.
 - Android `assembleDebug testDebugUnitTest lintDebug`: `BUILD SUCCESSFUL`, 61 tasks.
+- GitHub-hosted Foundation CI run `44735597051`: Backend/PostgreSQL/contract and Android jobs passed.
 
 ## Explicit non-goals and residual items
 
