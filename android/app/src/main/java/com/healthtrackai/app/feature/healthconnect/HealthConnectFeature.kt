@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -62,9 +64,9 @@ class HealthConnectViewModel @Inject constructor(
 
     private fun refreshAvailability(showConfirmation: Boolean) {
         _uiState.value = runCatching { LoadableState.Content(gateway.availability()) }
-            .getOrElse { LoadableState.Error("Health Connect availability could not be checked.") }
+            .getOrElse { LoadableState.Error("Không kiểm tra được khả năng sử dụng Health Connect.") }
         if (showConfirmation) {
-            effectChannel.trySend(HealthConnectUiEffect.ShowMessage("Availability refreshed"))
+            effectChannel.trySend(HealthConnectUiEffect.ShowMessage("Đã kiểm tra lại trạng thái Health Connect."))
         }
     }
 }
@@ -103,18 +105,34 @@ fun HealthConnectScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Text("KẾT NỐI SỨC KHỎE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         Text("Health Connect", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            "Chọn nguồn dữ liệu sức khỏe trên thiết bị và kiểm soát quyền truy cập của bạn.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         when (state) {
             LoadableState.Loading -> CircularProgressIndicator()
-            LoadableState.Empty -> Text("No Health Connect state is available.")
+            LoadableState.Empty -> Text("Chưa có trạng thái Health Connect.")
             is LoadableState.Error -> Text(state.message, color = MaterialTheme.colorScheme.error)
             is LoadableState.Offline -> Text(state.message, color = MaterialTheme.colorScheme.error)
             is LoadableState.Unavailable -> Text(state.reason, color = MaterialTheme.colorScheme.error)
-            is LoadableState.Content -> HealthConnectAvailabilityContent(state.value)
+            is LoadableState.Content -> Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Trạng thái trên thiết bị", style = MaterialTheme.typography.titleMedium)
+                    HealthConnectAvailabilityContent(state.value)
+                }
+            }
         }
-        Text("No permissions are requested and no health records are read in Foundation.")
+        Text(
+            "Hiện tại ứng dụng chỉ kiểm tra khả năng hỗ trợ. Chưa xin quyền và chưa đọc dữ liệu sức khỏe.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
         Button(onClick = { onEvent(HealthConnectUiEvent.RefreshAvailability) }) {
-            Text("Refresh availability")
+            Text("Kiểm tra lại")
         }
     }
 }
@@ -122,10 +140,10 @@ fun HealthConnectScreen(
 @Composable
 private fun HealthConnectAvailabilityContent(availability: HealthConnectAvailability) {
     val message = when (availability) {
-        HealthConnectAvailability.Available -> "Health Connect is available."
-        HealthConnectAvailability.ProviderUpdateRequired -> "Health Connect requires a provider update."
-        HealthConnectAvailability.Unavailable -> "Health Connect is unavailable on this device."
-        is HealthConnectAvailability.Unknown -> "Unknown Health Connect SDK status: ${availability.sdkStatus}."
+        HealthConnectAvailability.Available -> "Thiết bị đã sẵn sàng hỗ trợ Health Connect."
+        HealthConnectAvailability.ProviderUpdateRequired -> "Cần cập nhật nhà cung cấp Health Connect trên thiết bị."
+        HealthConnectAvailability.Unavailable -> "Thiết bị hiện chưa hỗ trợ Health Connect."
+        is HealthConnectAvailability.Unknown -> "Trạng thái SDK chưa được nhận diện: ${availability.sdkStatus}."
     }
     Text(message)
 }

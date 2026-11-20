@@ -91,7 +91,7 @@ private fun UnknownDestinationScreen(onBack: () -> Unit) {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("This destination is not supported by the current app version.")
-        Button(onClick = onBack) { Text("Back") }
+        Text("Phiên bản ứng dụng hiện tại chưa hỗ trợ màn hình này.")
+        Button(onClick = onBack) { Text("Quay lại") }
     }
 }

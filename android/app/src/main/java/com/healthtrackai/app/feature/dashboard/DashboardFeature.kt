@@ -1,25 +1,34 @@
 package com.healthtrackai.app.feature.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,7 +71,7 @@ class DashboardViewModel : ViewModel() {
 
             DashboardUiEvent.Retry -> {
                 _uiState.value = DashboardUiState()
-                effectChannel.trySend(DashboardUiEffect.ShowMessage("Foundation destinations refreshed"))
+                effectChannel.trySend(DashboardUiEffect.ShowMessage("Đã tải lại danh sách chức năng."))
             }
         }
     }
@@ -100,32 +109,169 @@ fun DashboardScreen(
     onEvent: (DashboardUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("HealthTrack AI", style = MaterialTheme.typography.headlineMedium)
-        Text("Foundation v0.1 — architecture placeholders; UC-01 through UC-20 are not implemented.")
-        when {
-            state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            state.errorMessage != null -> {
-                Text(state.errorMessage, color = MaterialTheme.colorScheme.error)
-                Button(onClick = { onEvent(DashboardUiEvent.Retry) }) { Text("Retry") }
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        Text(
+                            text = "+",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+                Text(
+                    text = "HealthTrack AI",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
             }
+        }
 
-            state.destinations.isEmpty() -> Text("No Foundation destinations are configured.")
-            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.destinations, key = FoundationFeature::route) { feature ->
-                    Button(
-                        onClick = { onEvent(DashboardUiEvent.SelectFeature(feature)) },
-                        modifier = Modifier.fillMaxWidth(),
+        item {
+            Text(
+                text = "Tổng quan sức khỏe",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = "Chưa có dữ liệu sức khỏe",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Text(
+                        text = "Các chỉ số và biểu đồ sẽ xuất hiện khi dữ liệu được kết nối.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "Chức năng",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+
+        if (state.isLoading) {
+            item {
+                CircularProgressIndicator(modifier = Modifier.padding(vertical = 16.dp))
+            }
+        } else if (state.errorMessage != null) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(state.errorMessage, color = MaterialTheme.colorScheme.error)
+                    androidx.compose.material3.TextButton(
+                        onClick = { onEvent(DashboardUiEvent.Retry) },
                     ) {
-                        Text(feature.title)
+                        Text("Thử tải lại")
                     }
                 }
             }
+        } else if (state.destinations.isEmpty()) {
+            item {
+                Text(
+                    text = "Chưa có chức năng nào được cấu hình.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            items(state.destinations, key = FoundationFeature::route) { feature ->
+                Card(
+                    onClick = { onEvent(DashboardUiEvent.SelectFeature(feature)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 18.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(42.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {
+                            Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                Text(
+                                    text = feature.title.take(1),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = feature.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = feature.summary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            text = "›",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "HealthTrack AI · Nền tảng đang được hoàn thiện",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 12.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
