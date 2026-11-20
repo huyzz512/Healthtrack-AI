@@ -58,7 +58,7 @@ Prisma cannot express every business check. The application layer and tests must
 - medication and appointment rows have the same owner as their parent reminder;
 - reminder schedule JSON matches the approved type-specific schema and IANA timezone;
 - Health Connect records are immutable from manual edit flows;
-- `URGENT` smart alerts remain informational and do not claim diagnosis or emergency dispatch;
+- `CRITICAL` smart alerts remain informational and do not claim diagnosis or emergency dispatch;
 - consent state is checked immediately before sharing minimum necessary AI context;
 - `AuditLog.metadata` is sanitized.
 
@@ -78,5 +78,11 @@ The approved schema was materialized as:
 - Generated client: Prisma Client 7.10.1 under the ignored `backend/src/generated/prisma` build output
 - Runtime connection: `PrismaService` with the approved PostgreSQL driver adapter
 
-Migration status: **APPLIED AND VERIFIED LOCALLY — 2026-11-19**.  
-Database schema status: **IN SYNC FOR THE LOCAL FOUNDATION DATABASE**.
+Initial migration status: **APPLIED AND VERIFIED LOCALLY — 2026-11-19**.
+
+## Foundation contract-alignment migration
+
+The non-destructive `20261120090000_align_foundation_contract_enums` migration aligns persistence terminology with CCR-001 by renaming the enum type/value labels `SourceType` → `DataSource`, `OTHER` → `IMPORTED`, `NEUTRAL` → `NORMAL`, `URGENT` → `CRITICAL`, `PENDING` → `REQUESTED`, and `COMPLETED` → `READY`, then adding `SYSTEM_GENERATED`. PostgreSQL retains existing rows and references during these enum renames. Application migrations must be applied with `prisma migrate deploy`; destructive database resets are not part of Foundation verification.
+
+Contract-alignment migration status: **APPLIED AND VERIFIED LOCALLY — 2026-11-20**.
+Database schema status: **2 MIGRATIONS APPLIED; IN SYNC FOR THE LOCAL FOUNDATION DATABASE**.

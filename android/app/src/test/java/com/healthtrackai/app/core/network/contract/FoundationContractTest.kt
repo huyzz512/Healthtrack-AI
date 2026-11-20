@@ -38,6 +38,24 @@ class FoundationContractTest {
         assertEquals(DatabaseStatus.UNKNOWN, health.database)
         assertEquals(ApiErrorCode.UNKNOWN, ApiErrorCode.fromWire("FUTURE_ERROR"))
         assertEquals(CanonicalUnit.UNKNOWN, CanonicalUnit.fromWire("future-unit"))
+        assertEquals(DataSource.UNKNOWN, DataSource.fromWire("FUTURE_SOURCE"))
+        assertEquals(MoodType.UNKNOWN, MoodType.fromWire("FUTURE_MOOD"))
+        assertEquals(AlertSeverity.UNKNOWN, AlertSeverity.fromWire("FUTURE_SEVERITY"))
+        assertEquals(ReportStatus.UNKNOWN, ReportStatus.fromWire("FUTURE_STATUS"))
+        assertEquals(ConsentType.UNKNOWN, ConsentType.fromWire("FUTURE_CONSENT"))
+        assertEquals(ConsentStatus.UNKNOWN, ConsentStatus.fromWire("FUTURE_CONSENT_STATUS"))
+    }
+
+    @Test
+    fun `maps the released Foundation shared enum values`() {
+        assertEquals(DataSource.IMPORTED, DataSource.fromWire("IMPORTED"))
+        assertEquals(DataSource.SYSTEM_GENERATED, DataSource.fromWire("SYSTEM_GENERATED"))
+        assertEquals(MoodType.NORMAL, MoodType.fromWire("NORMAL"))
+        assertEquals(AlertSeverity.CRITICAL, AlertSeverity.fromWire("CRITICAL"))
+        assertEquals(ReportStatus.REQUESTED, ReportStatus.fromWire("REQUESTED"))
+        assertEquals(ReportStatus.READY, ReportStatus.fromWire("READY"))
+        assertEquals(ConsentType.AI_HEALTH_CONTEXT, ConsentType.fromWire("AI_HEALTH_CONTEXT"))
+        assertEquals(ConsentStatus.GRANTED, ConsentStatus.fromWire("GRANTED"))
     }
 
     @Test

@@ -1,0 +1,122 @@
+name: Foundation CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**", "hotfix/**"]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foundation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend, contract, and PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.7-alpine
+        env:
+          POSTGRES_DB: healthtrack
+          POSTGRES_USER: healthtrack
+          POSTGRES_PASSWORD: foundation-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U healthtrack -d healthtrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      APP_HOST: 127.0.0.1
+      APP_PORT: 3000
+      APP_VERSION: foundation-v0.1
+      APP_CORS_ORIGINS: http://localhost:3000
+      DATABASE_URL: postgresql://healthtrack:foundation-ci-only@localhost:5432/healthtrack?schema=public
+      AI_PROVIDER: mock
+      OTP_PROVIDER: mock
+      NOTIFICATION_PROVIDER: mock
+      PDF_PROVIDER: mock
+      MINIO_ROOT_USER: foundation-ci
+      MINIO_ROOT_PASSWORD: foundation-ci-only
+      MINIO_ENDPOINT: localhost
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: false
+      MINIO_BUCKET: healthtrack-private
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Generate and validate Prisma client
+        run: |
+          npm run prisma:generate
+          npm run prisma:validate
+
+      - name: Apply and verify migrations
+        run: |
+          npm exec prisma migrate deploy
+          npm exec prisma migrate status
+
+      - name: Lint and typecheck
+        run: |
+          npm run lint
+          npm run typecheck
+
+      - name: Run Backend tests and build
+        run: |
+          npm test
+          npm run build
+
+      - name: Audit production dependency tree
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Verify OpenAPI is current
+        run: npm run openapi:check
+
+      - name: Verify database health and Swagger integration
+        run: npm run integration:verify
+
+  android:
+    name: Android build, tests, and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build, test, and lint Android
+        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest lintDebug
