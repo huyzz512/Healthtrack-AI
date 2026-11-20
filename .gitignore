@@ -1,0 +1,36 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Node / NestJS
+node_modules/
+backend/dist/
+backend/coverage/
+backend/.prisma/
+backend/src/generated/prisma/
+
+# Android / Gradle
+.gradle/
+android/.idea/
+android/local.properties
+android/**/build/
+*.apk
+*.aab
+
+# IDE and OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Local service data
+.data/
+postgres-data/
+minio-data/
+
