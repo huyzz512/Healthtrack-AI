@@ -13,3 +13,11 @@
 
 This is the initial contract baseline. Breaking changes require explicit Backend and Android approval.
 
+## Backend Phase 1 candidate — 2026-11-25
+
+- CCR-002: user-directed Backend Auth/Users implementation, ten previously
+  reserved paths, DTOs/errors and generated OpenAPI; Android review pending.
+- Existing Foundation health behavior and canonical enums retained.
+- No migration or dependency addition. Mock OTP and process-local IP throttling;
+  joint acceptance and production readiness are not claimed.
+

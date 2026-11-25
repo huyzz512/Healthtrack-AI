@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "status": "CCR-002 backend candidate; Android review pending",
+    "synthetic": true,
+    "note": "Example credentials and tokens are non-operational. Never use as real credentials."
+  },
+  "registerRequest": {
+    "email": "person@example.test",
+    "fullName": "Test Person",
+    "password": "Example!234",
+    "confirmPassword": "Example!234"
+  },
+  "registrationResponse": {
+    "data": {
+      "challengeId": "00000000-0000-4000-8000-000000000001",
+      "expiresAt": "2026-11-25T03:05:00.000Z",
+      "resendAvailableAt": "2026-11-25T03:01:00.000Z",
+      "resendsRemaining": 3
+    }
+  },
+  "verifiedResponse": { "data": { "verified": true } },
+  "loginResponse": {
+    "data": {
+      "accessToken": "example-header.example-payload.example-signature",
+      "refreshToken": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "tokenType": "Bearer",
+      "accessTokenExpiresAt": "2026-11-25T03:15:00.000Z",
+      "refreshTokenExpiresAt": "2026-12-25T03:00:00.000Z"
+    }
+  },
+  "meResponse": {
+    "data": {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "fullName": "Test Person",
+      "email": "person@example.test",
+      "phone": null,
+      "emailVerifiedAt": "2026-11-25T03:00:00.000Z",
+      "phoneVerifiedAt": null,
+      "createdAt": "2026-11-25T03:00:00.000Z",
+      "updatedAt": "2026-11-25T03:00:00.000Z"
+    }
+  },
+  "cooldownResponse": {
+    "error": {
+      "code": "AUTH_RATE_LIMITED",
+      "message": "auth rate limited",
+      "details": { "retryAfterSeconds": 60 },
+      "traceId": "example-trace"
+    }
+  },
+  "refreshInvalidResponse": {
+    "error": {
+      "code": "AUTH_REFRESH_INVALID",
+      "message": "auth refresh invalid",
+      "details": null,
+      "traceId": "example-trace"
+    }
+  }
+}

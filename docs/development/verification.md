@@ -44,6 +44,13 @@ CI uses the equivalent Linux Gradle Wrapper command with JDK 17.
 
 ## Continuous integration
 
+Backend Phase 1 adds `npm run test:auth:integration` after build. It exercises
+real PostgreSQL HTTP flows, transaction rollback and auth races inside a new
+isolated `auth_test_<random>` schema. It requires DATABASE_URL (or
+AUTH_TEST_DATABASE_URL) and schema-create permission. Synthetic schemas are
+retained intentionally; no existing data is reset or deleted. The Backend CI
+job runs this suite against its ephemeral PostgreSQL service.
+
 `.github/workflows/foundation-ci.yml` runs two independent jobs:
 
 - Backend/contract/PostgreSQL: locked install, Prisma generation and migration, lint, typecheck, tests, build, production dependency audit, OpenAPI drift, database health, and Swagger integration.

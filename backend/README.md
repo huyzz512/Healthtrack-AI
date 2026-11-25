@@ -1,6 +1,12 @@
-# Backend Foundation
+# HealthTrack AI Backend
 
-NestJS modular-monolith foundation for HealthTrack AI. This package contains infrastructure wiring and module boundaries only; it does not implement UC-01 through UC-20.
+NestJS modular monolith with the verified Foundation baseline and a Backend
+Phase 1 Auth/Users integration candidate. UC-01 login, UC-02 registration and
+supporting session/recovery/profile endpoints are implemented. Other business
+modules remain Foundation shells. Android review and joint acceptance are pending.
+
+See [Auth run/handoff guide](../docs/development/backend-auth-handoff.md) for
+secrets, mock OTP limitations, contract and integration instructions.
 
 ## Commands
 
@@ -26,6 +32,7 @@ npm run prisma:validate
 npm exec prisma migrate deploy
 npm exec prisma migrate status
 npm run integration:verify
+npm run test:auth:integration
 ```
 
 Regenerate the committed OpenAPI artifact with `npm run openapi:generate`. Private S3-compatible storage can be checked with `npm run storage:verify` while the local Silo service is running.

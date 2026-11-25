@@ -95,6 +95,9 @@ jobs:
       - name: Verify database health and Swagger integration
         run: npm run integration:verify
 
+      - name: Verify Auth transactions and HTTP flows on isolated PostgreSQL schema
+        run: npm run test:auth:integration
+
   android:
     name: Android build, tests, and lint
     runs-on: ubuntu-latest

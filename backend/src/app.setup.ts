@@ -17,6 +17,7 @@ export function configureApplication(
       forbidNonWhitelisted: true,
       transform: true,
       whitelist: true,
+      validationError: { target: false, value: false },
     }),
   );
   app.useGlobalFilters(new ApiExceptionFilter(logger));
@@ -30,7 +31,7 @@ export function configureApplication(
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('HealthTrack AI API')
-    .setDescription('Foundation contract surface; business endpoints are not implemented.')
+    .setDescription('Foundation health and Backend Phase 1 Auth/Users. CCR-002 integration candidate; Android review pending.')
     .setVersion(process.env.APP_VERSION ?? 'foundation-v0.1')
     .addBearerAuth()
     .build();

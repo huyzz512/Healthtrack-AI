@@ -28,7 +28,9 @@ const outputPath = resolve(process.cwd(), '../docs/api/openapi.json');
 try {
   if (process.argv.includes('--check')) {
     const committed = await readFile(outputPath, 'utf8').catch(() => '');
-    if (committed !== serialized) {
+    // Git may check out the committed JSON with CRLF on Windows. Ignore only
+    // that line-ending difference; all generated content must still match.
+    if (committed.replace(/\r\n/g, '\n') !== serialized) {
       throw new Error(
         'Committed OpenAPI is stale. Run "npm run openapi:generate" from backend/.',
       );

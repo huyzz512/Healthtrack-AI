@@ -2,6 +2,13 @@
 
 Status: **Foundation v0.1 released — 2026-11-20**, shared ownership.
 
+Backend Phase 1 candidate (2026-11-25): the ten Auth/Users paths below now have
+an executable Backend implementation. DTOs, new errors and session semantics are
+documented in [CCR-002](../governance/contract-changes/CCR-002-auth-session.md)
+and generated OpenAPI. The user explicitly authorized Backend implementation;
+Android review and joint integration acceptance remain pending. This notice
+does not record a new jointly approved contract release.
+
 ## Transport and root
 
 - HTTPS is mandatory outside local development.
@@ -118,7 +125,7 @@ ConsentStatus: GRANTED | REVOKED
 - Registration OTP is six digits, valid for five minutes, at most five failed entries; resend after 60 seconds, at most three resends per registration request, invalidating the previous OTP.
 - Five failed login attempts within 15 minutes temporarily restrict login for 15 minutes.
 
-Prepared endpoint paths (business flows are not implemented by Foundation):
+Endpoint paths (reserved by Foundation; implemented in Backend Phase 1 candidate):
 
 ```text
 POST /api/v1/auth/register

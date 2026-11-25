@@ -46,11 +46,15 @@ export class ApiExceptionFilter implements ExceptionFilter {
     this.logger.error({
       code,
       method: request.method,
-      path: request.originalUrl,
+      // Query strings may contain secrets even when an endpoint rejects them.
+      path: request.path,
       status,
       traceId,
     });
 
+    if (status === HttpStatus.TOO_MANY_REQUESTS && details && typeof details === 'object' && 'retryAfterSeconds' in details && typeof details.retryAfterSeconds === 'number') {
+      response.setHeader('Retry-After', String(details.retryAfterSeconds));
+    }
     response.status(status).json({
       error: {
         code,
