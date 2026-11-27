@@ -71,9 +71,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.healthtrackai.app.core.presentation.FoundationFeature
-import com.healthtrackai.app.feature.dashboard.BackendStatus
 import com.healthtrackai.app.feature.dashboard.DashboardUiEvent
 import com.healthtrackai.app.feature.dashboard.DashboardUiState
+import com.healthtrackai.app.feature.dashboard.BackendStatus
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -109,7 +109,13 @@ fun OverviewScreen(state: DashboardUiState, onEvent: (DashboardUiEvent) -> Unit,
             contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Header(onQuickAdd = { quickAddVisible = true }) }
+            item {
+                Header(
+                    backendStatus = state.backendStatus,
+                    onQuickAdd = { quickAddVisible = true },
+                    onRetry = { onEvent(DashboardUiEvent.Retry) },
+                )
+            }
             item { AiInsightCard() }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -320,7 +326,11 @@ fun OverviewScreen(state: DashboardUiState, onEvent: (DashboardUiEvent) -> Unit,
 }
 
 @Composable
-private fun Header(onQuickAdd: () -> Unit) {
+private fun Header(
+    backendStatus: BackendStatus,
+    onQuickAdd: () -> Unit,
+    onRetry: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             Surface(shape = CircleShape, color = Color.White, border = androidx.compose.foundation.BorderStroke(1.5.dp, Teal), modifier = Modifier.size(38.dp)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Person, null, tint = Teal, modifier = Modifier.size(20.dp)) } }
@@ -333,7 +343,47 @@ private fun Header(onQuickAdd: () -> Unit) {
             }
             Surface(shape = CircleShape, color = Teal, modifier = Modifier.size(38.dp).clickable(onClick = onQuickAdd)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, "Ghi nhanh", tint = Color.White) } }
         }
-        Text("Sức khỏe mỗi ngày", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                "Sức khỏe mỗi ngày",
+                Modifier.weight(1f),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val connected = backendStatus == BackendStatus.CONNECTED
+            val statusColor = if (connected) Color(0xFF059669) else Color(0xFFB45309)
+            Surface(
+                modifier = Modifier.clickable(onClick = onRetry),
+                shape = CircleShape,
+                color = if (connected) Color(0xFFECFDF5) else Color(0xFFFFF7ED),
+            ) {
+                Row(
+                    Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    Box(Modifier.size(6.dp).clip(CircleShape).background(statusColor))
+                    Text(
+                        when (backendStatus) {
+                            BackendStatus.CONNECTED -> "Máy chủ hoạt động"
+                            BackendStatus.CHECKING -> "Đang kết nối"
+                            BackendStatus.UNAVAILABLE -> "Thử kết nối"
+                        },
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = statusColor,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
     }
 }
 

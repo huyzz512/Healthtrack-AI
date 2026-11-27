@@ -232,7 +232,9 @@ fun DashboardScreen(
         })
     }
     val navigateToFeature: (FoundationFeature) -> Unit = { feature ->
-        if (feature in setOf(
+        if (feature == FoundationFeature.Auth || feature == FoundationFeature.Account) {
+            onEvent(DashboardUiEvent.SelectFeature(feature))
+        } else if (feature in setOf(
                 FoundationFeature.Activity,
                 FoundationFeature.Mood,
                 FoundationFeature.Nutrition,

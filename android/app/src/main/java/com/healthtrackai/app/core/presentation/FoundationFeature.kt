@@ -20,6 +20,7 @@ enum class FoundationFeature(
     Analytics("analytics", "Phân tích", "Xem thống kê sức khỏe theo thời gian."),
     Reports("reports", "Báo cáo", "Yêu cầu và xem báo cáo sức khỏe."),
     Sleep("sleep", "Giấc ngủ", "Theo dõi thời lượng và chất lượng giấc ngủ."),
+    Account("account", "Tài khoản", "Đăng nhập và quản lý thông tin tài khoản."),
     ;
 
     companion object {

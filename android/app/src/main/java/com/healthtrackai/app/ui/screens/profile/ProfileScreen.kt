@@ -31,10 +31,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,7 +40,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +63,6 @@ private val Ink = Color(0xFF0F172A)
 private val Muted = Color(0xFF64748B)
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = Modifier) {
     var waterRemindersEnabled by remember { mutableStateOf(true) }
     var heartRateAlertsEnabled by remember { mutableStateOf(true) }
@@ -74,8 +70,6 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
     var stepGoal by remember { mutableStateOf(8_000) }
     var waterGoal by remember { mutableStateOf(2_000) }
     var editingGoal by remember { mutableStateOf<String?>(null) }
-    var loginSheetVisible by remember { mutableStateOf(false) }
-    var demoSessionEnabled by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -102,12 +96,12 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text("Nguyễn Minh Anh", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Ink, maxLines = 1)
                                 Surface(shape = CircleShape, color = Color(0xFFECFDF5), modifier = Modifier.align(Alignment.Start)) {
-                                    Text(if (demoSessionEnabled) "Demo đã kết nối" else "Tài khoản Demo", Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = Teal, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                    Text("Dữ liệu sức khỏe mẫu", Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = Teal, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                 }
                                 Text("28 tuổi · Nhóm máu O+", fontSize = 11.sp, color = Muted, maxLines = 1)
                             }
                             Button(
-                                onClick = { loginSheetVisible = true },
+                                onClick = { onNavigate(FoundationFeature.Auth) },
                                 modifier = Modifier.widthIn(max = 106.dp),
                                 contentPadding = PaddingValues(horizontal = 7.dp, vertical = 7.dp),
                                 shape = RoundedCornerShape(12.dp),
@@ -216,38 +210,6 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
         )
     }
 
-    if (loginSheetVisible) {
-        ModalBottomSheet(
-            onDismissRequest = { loginSheetVisible = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = Color.White,
-        ) {
-            Column(
-                Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text("Đăng nhập / Đồng bộ", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Ink)
-                Text(
-                    "Đây là giao diện đăng nhập minh họa. Tài khoản Demo chưa kết nối máy chủ và không đồng bộ dữ liệu.",
-                    fontSize = 14.sp,
-                    color = Muted,
-                    lineHeight = 20.sp,
-                )
-                Button(
-                    onClick = {
-                        demoSessionEnabled = true
-                        loginSheetVisible = false
-                        scope.launch { snackbarHostState.showSnackbar("Đã chuyển sang phiên Demo trên giao diện.") }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                ) { Text("Tiếp tục với tài khoản Demo") }
-                TextButton(onClick = { loginSheetVisible = false }, modifier = Modifier.align(Alignment.End)) {
-                    Text("Đóng")
-                }
-            }
-        }
-    }
 }
 
 @Composable

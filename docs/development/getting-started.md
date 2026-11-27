@@ -54,7 +54,22 @@ Set `sdk.dir` in the ignored `android/local.properties` when the Android SDK is 
 .\gradlew.bat --no-daemon assembleDebug testDebugUnitTest lintDebug
 ```
 
-The Foundation build intentionally uses the non-routable `https://api.invalid/api/v1/` base URL. A deployable environment URL and its secure configuration process require a later approved task.
+Debug builds default to `http://127.0.0.1:3001/api/v1/` for local LDPlayer development. Forward that port to the host before launching the app:
+
+```powershell
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb -s 127.0.0.1:5555 reverse tcp:3001 tcp:3001
+```
+
+Run the backend on port `3001` when the default port `3000` is already occupied:
+
+```powershell
+$env:APP_HOST = "0.0.0.0"
+$env:APP_PORT = "3001"
+npm run start:dev
+```
+
+For another emulator or API host, override the debug URL with `-PhealthtrackApiBaseUrl=http://<host>:<port>/api/v1/` or `HEALTHTRACK_API_BASE_URL`. Debug permits cleartext HTTP for local development only; release builds must use HTTPS and an explicitly configured API URL.
 
 ## Stop local services
 

@@ -28,11 +28,17 @@ android {
     buildTypes {
         debug {
             val debugApiUrl = providers.gradleProperty("healthtrackApiBaseUrl")
-                .orElse("http://10.0.2.2:3000/api/v1/")
+                .orElse(providers.environmentVariable("HEALTHTRACK_API_BASE_URL"))
+                .orElse("http://127.0.0.1:3001/api/v1/")
                 .get()
             buildConfigField("String", "API_BASE_URL", "\"$debugApiUrl\"")
         }
         release {
+            val releaseApiUrl = providers.gradleProperty("healthtrackApiBaseUrl")
+                .orElse(providers.environmentVariable("HEALTHTRACK_API_BASE_URL"))
+                .orElse("https://api.invalid/api/v1/")
+                .get()
+            buildConfigField("String", "API_BASE_URL", "\"$releaseApiUrl\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

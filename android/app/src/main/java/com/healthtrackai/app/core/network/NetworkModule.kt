@@ -2,6 +2,7 @@ package com.healthtrackai.app.core.network
 
 import com.healthtrackai.app.BuildConfig
 import com.healthtrackai.app.core.network.contract.FoundationHealthApi
+import com.healthtrackai.app.feature.auth.AuthApi
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -28,9 +29,9 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(5, TimeUnit.SECONDS)
-        .callTimeout(8, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .callTimeout(20, TimeUnit.SECONDS)
         .build()
 
     @Provides
@@ -48,4 +49,8 @@ object NetworkModule {
     @Singleton
     fun provideFoundationHealthApi(retrofit: Retrofit): FoundationHealthApi =
         retrofit.create(FoundationHealthApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAuthApi(retrofit: Retrofit): AuthApi = retrofit.create(AuthApi::class.java)
 }
