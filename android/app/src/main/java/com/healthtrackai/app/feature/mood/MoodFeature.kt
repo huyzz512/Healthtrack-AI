@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +41,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.healthtrackai.app.core.network.contract.MoodType
+import com.healthtrackai.app.core.domain.LocalHealthEntry
+import com.healthtrackai.app.core.domain.LocalHealthEntryRepository
+import com.healthtrackai.app.core.presentation.viewModelWithLocalHealthRepository
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,6 +61,9 @@ data class MoodUiState(
     val note: String = "",
     val validationMessage: String? = null,
     val statusMessage: String? = null,
+    val history: List<LocalHealthEntry> = emptyList(),
+    val editingId: String? = null,
+    val pendingDeleteId: String? = null,
 )
 
 sealed interface MoodUiEvent {
@@ -62,11 +72,23 @@ sealed interface MoodUiEvent {
     data object ShowEntry : MoodUiEvent
     data object ShowHistory : MoodUiEvent
     data object Save : MoodUiEvent
+    data class EditRecord(val id: String) : MoodUiEvent
+    data class RequestDeleteRecord(val id: String) : MoodUiEvent
+    data object ConfirmDeleteRecord : MoodUiEvent
+    data object CancelDeleteRecord : MoodUiEvent
 }
 
-class MoodViewModel : ViewModel() {
+class MoodViewModel(private val repository: LocalHealthEntryRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(MoodUiState())
     val uiState: StateFlow<MoodUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            repository.observe("mood").collectLatest { history ->
+                _uiState.value = _uiState.value.copy(history = history)
+            }
+        }
+    }
 
     fun onEvent(event: MoodUiEvent) {
         val current = _uiState.value
@@ -84,19 +106,74 @@ class MoodViewModel : ViewModel() {
 
             MoodUiEvent.ShowEntry -> current.copy(page = MoodPage.ENTRY)
             MoodUiEvent.ShowHistory -> current.copy(page = MoodPage.HISTORY)
-            MoodUiEvent.Save -> if (current.selectedMood == null) {
-                current.copy(
-                    validationMessage = "Vui lòng chọn trạng thái cảm xúc.",
+            is MoodUiEvent.EditRecord -> {
+                val entry = current.history.firstOrNull { it.id == event.id }
+                val values = entry?.let(::decodeMoodEntry)
+                if (entry == null || values == null) current.copy(statusMessage = "Không đọc được bản ghi cảm xúc này.")
+                else current.copy(
+                    page = MoodPage.ENTRY,
+                    selectedMood = values.first,
+                    note = values.second,
+                    editingId = entry.id,
+                    validationMessage = null,
                     statusMessage = null,
                 )
-            } else {
-                current.copy(
-                    validationMessage = null,
-                    statusMessage = "API nhật ký cảm xúc chưa được kết nối; dữ liệu chưa được lưu.",
-                )
+            }
+            is MoodUiEvent.RequestDeleteRecord -> current.copy(pendingDeleteId = event.id)
+            MoodUiEvent.CancelDeleteRecord -> current.copy(pendingDeleteId = null)
+            MoodUiEvent.ConfirmDeleteRecord -> {
+                val id = current.pendingDeleteId
+                if (id != null) viewModelScope.launch {
+                    runCatching { repository.delete(id) }
+                        .onSuccess { _uiState.value = _uiState.value.copy(statusMessage = "Đã xóa bản ghi trên thiết bị.") }
+                        .onFailure { _uiState.value = _uiState.value.copy(statusMessage = "Không xóa được bản ghi. Vui lòng thử lại.") }
+                }
+                current.copy(pendingDeleteId = null)
+            }
+            MoodUiEvent.Save -> {
+                if (current.selectedMood == null) {
+                    current.copy(validationMessage = "Vui lòng chọn trạng thái cảm xúc.", statusMessage = null)
+                } else {
+                    val content = encodeMoodEntry(current.selectedMood, current.note)
+                    val editingId = current.editingId
+                    viewModelScope.launch {
+                        runCatching {
+                            if (editingId == null) {
+                                repository.add("mood", "Nhật ký cảm xúc", content)
+                            } else {
+                                val existing = _uiState.value.history.firstOrNull { it.id == editingId }
+                                    ?: error("Mood entry was not found")
+                                repository.update(existing.copy(content = content, recordedAtEpochMillis = System.currentTimeMillis()))
+                            }
+                        }.onSuccess {
+                            _uiState.value = _uiState.value.copy(
+                                page = MoodPage.HISTORY,
+                                selectedMood = null,
+                                note = "",
+                                editingId = null,
+                                validationMessage = null,
+                                statusMessage = if (editingId == null) "Đã lưu nhật ký trên thiết bị này; chưa đồng bộ lên Backend." else "Đã cập nhật nhật ký trên thiết bị này.",
+                            )
+                        }.onFailure {
+                            _uiState.value = _uiState.value.copy(statusMessage = "Không lưu được nhật ký. Vui lòng thử lại.")
+                        }
+                    }
+                    current.copy(validationMessage = null, statusMessage = "Đang lưu trên thiết bị…")
+                }
             }
         }
     }
+}
+
+private fun encodeMoodEntry(mood: MoodType, note: String): String = "mood=${mood.name}\nnote=$note"
+
+private fun decodeMoodEntry(entry: LocalHealthEntry): Pair<MoodType, String>? {
+    val moodValue = entry.content.lineSequence().firstOrNull { it.startsWith("mood=") }?.substringAfter("mood=")
+        ?: return null
+    val mood = runCatching { MoodType.valueOf(moodValue) }.getOrNull()?.takeIf { it != MoodType.UNKNOWN }
+        ?: return null
+    val note = entry.content.lineSequence().firstOrNull { it.startsWith("note=") }?.substringAfter("note=").orEmpty()
+    return mood to note
 }
 
 private data class MoodOption(
@@ -114,7 +191,9 @@ private val moodOptions = listOf(
 )
 
 @Composable
-fun MoodRoute(viewModel: MoodViewModel = viewModel()) {
+fun MoodRoute(
+    viewModel: MoodViewModel = viewModelWithLocalHealthRepository("mood", MoodViewModel::class) { MoodViewModel(it) },
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     MoodScreen(state = state, onEvent = viewModel::onEvent)
 }
@@ -150,7 +229,16 @@ fun MoodScreen(
 
             when (state.page) {
                 MoodPage.ENTRY -> MoodEntryContent(state = state, onEvent = onEvent)
-                MoodPage.HISTORY -> MoodHistoryContent(onEntry = { onEvent(MoodUiEvent.ShowEntry) })
+                MoodPage.HISTORY -> MoodHistoryContent(state, onEvent)
+            }
+            if (state.pendingDeleteId != null) {
+                AlertDialog(
+                    onDismissRequest = { onEvent(MoodUiEvent.CancelDeleteRecord) },
+                    title = { Text("Xóa bản ghi cảm xúc?") },
+                    text = { Text("Bản ghi sẽ bị xóa khỏi thiết bị này.") },
+                    confirmButton = { TextButton(onClick = { onEvent(MoodUiEvent.ConfirmDeleteRecord) }) { Text("Xóa") } },
+                    dismissButton = { TextButton(onClick = { onEvent(MoodUiEvent.CancelDeleteRecord) }) { Text("Hủy") } },
+                )
             }
         }
     }
@@ -429,7 +517,50 @@ private fun MoodChoiceCard(
 }
 
 @Composable
-private fun MoodHistoryContent(onEntry: () -> Unit) {
+private fun MoodHistoryContent(state: MoodUiState, onEvent: (MoodUiEvent) -> Unit) {
+    state.statusMessage?.let { message ->
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        ) {
+            Text(message, Modifier.padding(14.dp), color = MaterialTheme.colorScheme.onSecondaryContainer)
+        }
+    }
+    if (state.history.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Bản ghi trên thiết bị", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            state.history.forEach { entry ->
+                val (mood, note) = decodeMoodEntry(entry) ?: return@forEach
+                val option = moodOptions.firstOrNull { it.type == mood }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(option?.emoji ?: "•", fontSize = 26.sp)
+                            Text(option?.label ?: "Không xác định", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        }
+                        if (note.isNotBlank()) Text(note, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+                                .format(java.util.Date(entry.recordedAtEpochMillis)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row {
+                            TextButton(onClick = { onEvent(MoodUiEvent.EditRecord(entry.id)) }) { Text("Xem và sửa") }
+                            TextButton(onClick = { onEvent(MoodUiEvent.RequestDeleteRecord(entry.id)) }) { Text("Xóa") }
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -453,12 +584,12 @@ private fun MoodHistoryContent(onEntry: () -> Unit) {
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = "Chưa có bản ghi. API lịch sử chưa được kết nối nên ứng dụng chưa thể tải dữ liệu.",
+                text = "Chưa có bản ghi trên thiết bị này. Nhật ký mới sẽ được lưu cục bộ và chưa đồng bộ lên Backend.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            TextButton(onClick = onEntry) {
+            TextButton(onClick = { onEvent(MoodUiEvent.ShowEntry) }) {
                 Text("Ghi nhận cảm xúc")
             }
         }

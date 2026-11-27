@@ -9,15 +9,18 @@ import com.healthtrackai.app.core.presentation.FoundationFeatureViewModel
 import com.healthtrackai.app.core.presentation.FoundationUiEffect
 import com.healthtrackai.app.core.presentation.FoundationUiEvent
 import com.healthtrackai.app.core.presentation.FoundationUiState
+import com.healthtrackai.app.core.presentation.foundationFeatureViewModel
+import com.healthtrackai.app.core.domain.LocalHealthEntryRepository
 
 typealias RemindersUiState = FoundationUiState
 typealias RemindersUiEvent = FoundationUiEvent
 typealias RemindersUiEffect = FoundationUiEffect
 
-class RemindersViewModel : FoundationFeatureViewModel(FoundationFeature.Reminders)
+class RemindersViewModel(repository: LocalHealthEntryRepository) :
+    FoundationFeatureViewModel(FoundationFeature.Reminders, repository)
 
 @Composable
-fun RemindersRoute(viewModel: RemindersViewModel = viewModel()) {
+fun RemindersRoute(viewModel: RemindersViewModel = foundationFeatureViewModel("reminders", RemindersViewModel::class) { RemindersViewModel(it) }) {
     FoundationFeatureRoute(viewModel) { state, onEvent -> RemindersScreen(state, onEvent) }
 }
 

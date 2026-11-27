@@ -9,15 +9,18 @@ import com.healthtrackai.app.core.presentation.FoundationFeatureViewModel
 import com.healthtrackai.app.core.presentation.FoundationUiEffect
 import com.healthtrackai.app.core.presentation.FoundationUiEvent
 import com.healthtrackai.app.core.presentation.FoundationUiState
+import com.healthtrackai.app.core.presentation.foundationFeatureViewModel
+import com.healthtrackai.app.core.domain.LocalHealthEntryRepository
 
 typealias AnalyticsUiState = FoundationUiState
 typealias AnalyticsUiEvent = FoundationUiEvent
 typealias AnalyticsUiEffect = FoundationUiEffect
 
-class AnalyticsViewModel : FoundationFeatureViewModel(FoundationFeature.Analytics)
+class AnalyticsViewModel(repository: LocalHealthEntryRepository) :
+    FoundationFeatureViewModel(FoundationFeature.Analytics, repository)
 
 @Composable
-fun AnalyticsRoute(viewModel: AnalyticsViewModel = viewModel()) {
+fun AnalyticsRoute(viewModel: AnalyticsViewModel = foundationFeatureViewModel("analytics", AnalyticsViewModel::class) { AnalyticsViewModel(it) }) {
     FoundationFeatureRoute(viewModel) { state, onEvent -> AnalyticsScreen(state, onEvent) }
 }
 

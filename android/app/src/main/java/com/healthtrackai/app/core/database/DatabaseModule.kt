@@ -20,10 +20,15 @@ object DatabaseModule {
         context,
         HealthTrackDatabase::class.java,
         "healthtrack.db",
-    ).build()
+    ).addMigrations(HealthTrackDatabase.MIGRATION_1_2).build()
 
     @Provides
     fun provideFoundationMetadataDao(
         database: HealthTrackDatabase,
     ): FoundationMetadataDao = database.foundationMetadataDao()
+
+    @Provides
+    fun provideLocalHealthEntryDao(
+        database: HealthTrackDatabase,
+    ): LocalHealthEntryDao = database.localHealthEntryDao()
 }

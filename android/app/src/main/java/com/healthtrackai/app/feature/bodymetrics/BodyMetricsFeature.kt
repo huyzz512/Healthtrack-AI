@@ -9,15 +9,18 @@ import com.healthtrackai.app.core.presentation.FoundationFeatureViewModel
 import com.healthtrackai.app.core.presentation.FoundationUiEffect
 import com.healthtrackai.app.core.presentation.FoundationUiEvent
 import com.healthtrackai.app.core.presentation.FoundationUiState
+import com.healthtrackai.app.core.presentation.foundationFeatureViewModel
+import com.healthtrackai.app.core.domain.LocalHealthEntryRepository
 
 typealias BodyMetricsUiState = FoundationUiState
 typealias BodyMetricsUiEvent = FoundationUiEvent
 typealias BodyMetricsUiEffect = FoundationUiEffect
 
-class BodyMetricsViewModel : FoundationFeatureViewModel(FoundationFeature.BodyMetrics)
+class BodyMetricsViewModel(repository: LocalHealthEntryRepository) :
+    FoundationFeatureViewModel(FoundationFeature.BodyMetrics, repository)
 
 @Composable
-fun BodyMetricsRoute(viewModel: BodyMetricsViewModel = viewModel()) {
+fun BodyMetricsRoute(viewModel: BodyMetricsViewModel = foundationFeatureViewModel("body-metrics", BodyMetricsViewModel::class) { BodyMetricsViewModel(it) }) {
     FoundationFeatureRoute(viewModel) { state, onEvent -> BodyMetricsScreen(state, onEvent) }
 }
 

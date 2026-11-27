@@ -17,15 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.healthtrackai.app.core.common.LoadableState
+import com.healthtrackai.app.core.di.healthTrackEntryPoint
 import com.healthtrackai.app.core.healthconnect.domain.HealthConnectAvailability
 import com.healthtrackai.app.core.healthconnect.domain.HealthConnectGateway
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,8 +44,7 @@ sealed interface HealthConnectUiEffect {
     data class ShowMessage(val message: String) : HealthConnectUiEffect
 }
 
-@HiltViewModel
-class HealthConnectViewModel @Inject constructor(
+class HealthConnectViewModel(
     private val gateway: HealthConnectGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<HealthConnectUiState>(LoadableState.Loading)
@@ -72,7 +73,16 @@ class HealthConnectViewModel @Inject constructor(
 }
 
 @Composable
-fun HealthConnectRoute(viewModel: HealthConnectViewModel) {
+fun HealthConnectRoute() {
+    val context = LocalContext.current.applicationContext
+    val gateway = remember(context) { healthTrackEntryPoint(context).healthConnectGateway() }
+    val factory = remember(gateway) {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = HealthConnectViewModel(gateway) as T
+        }
+    }
+    val viewModel: HealthConnectViewModel = viewModel(factory = factory)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 

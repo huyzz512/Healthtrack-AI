@@ -26,6 +26,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            val debugApiUrl = providers.gradleProperty("healthtrackApiBaseUrl")
+                .orElse("http://10.0.2.2:3000/api/v1/")
+                .get()
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiUrl\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -67,6 +73,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.tooling.preview)
 
     implementation(libs.hilt.android)

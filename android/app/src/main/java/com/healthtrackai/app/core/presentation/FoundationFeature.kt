@@ -19,6 +19,7 @@ enum class FoundationFeature(
     Activity("activity", "Hoạt động", "Theo dõi hoạt động thể chất."),
     Analytics("analytics", "Phân tích", "Xem thống kê sức khỏe theo thời gian."),
     Reports("reports", "Báo cáo", "Yêu cầu và xem báo cáo sức khỏe."),
+    Sleep("sleep", "Giấc ngủ", "Theo dõi thời lượng và chất lượng giấc ngủ."),
     ;
 
     companion object {

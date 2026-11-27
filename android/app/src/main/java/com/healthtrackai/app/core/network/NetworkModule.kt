@@ -1,6 +1,7 @@
 package com.healthtrackai.app.core.network
 
 import com.healthtrackai.app.BuildConfig
+import com.healthtrackai.app.core.network.contract.FoundationHealthApi
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -11,6 +12,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import java.util.concurrent.TimeUnit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -25,7 +27,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder().build()
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .callTimeout(8, TimeUnit.SECONDS)
+        .build()
 
     @Provides
     @Singleton
@@ -37,4 +43,9 @@ object NetworkModule {
         .client(client)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
+
+    @Provides
+    @Singleton
+    fun provideFoundationHealthApi(retrofit: Retrofit): FoundationHealthApi =
+        retrofit.create(FoundationHealthApi::class.java)
 }
