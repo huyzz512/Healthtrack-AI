@@ -60,9 +60,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-private val Teal = Color(0xFF0F766E)
-private val Ink = Color(0xFF0F172A)
-private val Muted = Color(0xFF64748B)
+private val Teal: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+private val Ink: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val Muted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 enum class AuthStage {
     SIGN_IN,
@@ -278,27 +281,52 @@ class AuthViewModel(
 
     private fun resendOtp() {
         val state = _uiState.value
-        val challengeId = state.challengeId
-        if (
-            state.isLoading ||
-            state.stage !in setOf(AuthStage.VERIFY_REGISTRATION, AuthStage.RESET_PASSWORD) ||
-            challengeId.isNullOrBlank()
-        ) return
-        if (state.resendsRemaining <= 0) {
-            update { copy(errorMessage = "Bạn đã yêu cầu gửi lại OTP quá số lần cho phép.") }
-            return
-        }
-        performRequest {
-            val challenge = repository.resendOtp(challengeId)
-            update {
-                copy(
-                    challengeId = challenge.challengeId,
-                    resendAvailableAt = challenge.resendAvailableAt,
-                    resendsRemaining = challenge.resendsRemaining,
-                    otpCode = "",
-                    statusMessage = "Đã gửi yêu cầu gửi lại mã OTP.",
-                )
+        if (state.isLoading) return
+        when (state.stage) {
+            AuthStage.VERIFY_REGISTRATION -> {
+                val challengeId = state.challengeId
+                if (challengeId.isNullOrBlank()) return
+                if (state.resendsRemaining <= 0) {
+                    update { copy(errorMessage = "Bạn đã yêu cầu gửi lại OTP quá số lần cho phép.") }
+                    return
+                }
+                val availableAt = state.resendAvailableAt
+                    ?.let { value -> runCatching { Instant.parse(value) }.getOrNull() }
+                    ?: return
+                if (availableAt.isAfter(Instant.now())) return
+                performRequest {
+                    val challenge = repository.resendOtp(challengeId)
+                    update {
+                        copy(
+                            challengeId = challenge.challengeId,
+                            resendAvailableAt = challenge.resendAvailableAt,
+                            resendsRemaining = challenge.resendsRemaining,
+                            otpCode = "",
+                            statusMessage = "Đã gửi yêu cầu gửi lại mã OTP.",
+                        )
+                    }
+                }
             }
+            AuthStage.RESET_PASSWORD -> {
+                if (state.challengeId.isNullOrBlank() || state.identifier.isBlank()) return
+                val availableAt = state.resendAvailableAt
+                    ?.let { value -> runCatching { Instant.parse(value) }.getOrNull() }
+                    ?: return
+                if (availableAt.isAfter(Instant.now())) return
+                performRequest {
+                    val challenge = repository.requestPasswordReset(state.identifier)
+                    update {
+                        copy(
+                            challengeId = challenge.challengeId,
+                            resendAvailableAt = challenge.resendAvailableAt,
+                            resendsRemaining = challenge.resendsRemaining,
+                            otpCode = "",
+                            statusMessage = "Nếu thông tin hợp lệ, mã xác minh mới sẽ được gửi.",
+                        )
+                    }
+                }
+            }
+            else -> Unit
         }
     }
 
@@ -529,17 +557,23 @@ fun AuthScreen(
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                    if (
-                        state.stage in setOf(AuthStage.VERIFY_REGISTRATION, AuthStage.RESET_PASSWORD) &&
-                        state.resendsRemaining > 0
-                    ) {
+                    val canRequestAnotherCode = when (state.stage) {
+                        AuthStage.VERIFY_REGISTRATION -> state.resendsRemaining > 0
+                        AuthStage.RESET_PASSWORD -> state.challengeId != null && state.resendAvailableAt != null
+                        else -> false
+                    }
+                    if (canRequestAnotherCode) {
                         TextButton(
                             onClick = { onEvent(AuthUiEvent.ResendOtp) },
                             enabled = !state.isLoading && resendWait == 0L,
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                         ) {
                             Text(
-                                if (resendWait > 0) "Gửi lại mã sau ${resendWait}s" else "Gửi lại mã OTP",
+                                when {
+                                    resendWait > 0 -> "Gửi lại mã sau ${resendWait}s"
+                                    state.stage == AuthStage.RESET_PASSWORD -> "Yêu cầu mã khôi phục mới"
+                                    else -> "Gửi lại mã OTP"
+                                },
                             )
                         }
                     }
@@ -553,7 +587,7 @@ fun AuthScreen(
                         if (state.isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 strokeWidth = 2.dp,
                             )
                         } else {

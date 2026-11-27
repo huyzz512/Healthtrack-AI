@@ -1,16 +1,26 @@
 package com.healthtrackai.app.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 object HealthPalette {
-    val Background = Color(0xFFF7F9FC)
-    val Card = Color(0xFFFFFFFF)
-    val Border = Color(0xFFE2E8F0)
-    val Primary = Color(0xFF0F766E)
-    val Mint = Color(0xFFCCFBF1)
-    val TextPrimary = Color(0xFF0F172A)
-    val TextSecondary = Color(0xFF64748B)
-    val Divider = Color(0xFFF1F5F9)
+    val Background: Color
+        @Composable get() = MaterialTheme.colorScheme.background
+    val Card: Color
+        @Composable get() = MaterialTheme.colorScheme.surface
+    val Border: Color
+        @Composable get() = MaterialTheme.colorScheme.outlineVariant
+    val Primary: Color
+        @Composable get() = MaterialTheme.colorScheme.primary
+    val Mint: Color
+        @Composable get() = MaterialTheme.colorScheme.primaryContainer
+    val TextPrimary: Color
+        @Composable get() = MaterialTheme.colorScheme.onSurface
+    val TextSecondary: Color
+        @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+    val Divider: Color
+        @Composable get() = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f)
     val ActivityBackground = Color(0xFFFFF1F2)
     val ActivityAccent = Color(0xFFE11D48)
     val MoodBackground = Color(0xFFECFDF5)

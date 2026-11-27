@@ -1,5 +1,8 @@
 package com.healthtrackai.app.core.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -17,13 +20,21 @@ private const val ACCOUNT_ROUTE = "account"
 @Composable
 fun HealthTrackNavHost(
     navController: NavHostController = rememberNavController(),
+    isDarkMode: Boolean = false,
+    onDarkModeChange: (Boolean) -> Unit = {},
 ) {
     NavHost(
         navController = navController,
         startDestination = DASHBOARD_ROUTE,
+        enterTransition = { fadeIn(animationSpec = tween(220)) },
+        exitTransition = { fadeOut(animationSpec = tween(220)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(220)) },
+        popExitTransition = { fadeOut(animationSpec = tween(220)) },
     ) {
         composable(DASHBOARD_ROUTE) {
             DashboardRoute(
+                isDarkMode = isDarkMode,
+                onDarkModeChange = onDarkModeChange,
                 onNavigate = { feature ->
                     when (feature) {
                         FoundationFeature.Auth -> navController.navigate(AUTH_ROUTE)

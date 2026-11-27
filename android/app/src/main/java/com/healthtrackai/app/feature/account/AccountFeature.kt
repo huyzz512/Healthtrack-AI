@@ -54,9 +54,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-private val Teal = Color(0xFF0F766E)
-private val Ink = Color(0xFF0F172A)
-private val Muted = Color(0xFF64748B)
+private val Teal: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+private val Ink: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val Muted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 data class AccountUiState(
     val user: AuthUserDto? = null,
@@ -220,7 +223,7 @@ private fun AccountScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                     ) {
                         Column(
                             Modifier.padding(24.dp),
@@ -236,7 +239,7 @@ private fun AccountScreen(
                 item {
                     Card(
                         shape = RoundedCornerShape(22.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     ) {
                         Column(
                             Modifier.fillMaxWidth().padding(20.dp),
@@ -269,7 +272,7 @@ private fun AccountScreen(
                 item {
                     Card(
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     ) {
                         Column(
                             Modifier.fillMaxWidth().padding(16.dp),
@@ -359,8 +362,8 @@ private fun AccountIdentityCard(
 ) {
     Card(
         shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             Modifier.fillMaxWidth().padding(18.dp),

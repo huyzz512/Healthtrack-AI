@@ -18,7 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Assessment
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.HealthAndSafety
 import androidx.compose.material.icons.rounded.MedicalInformation
@@ -33,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,20 +53,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.healthtrackai.app.ui.components.HealthScreenHeader
 import com.healthtrackai.app.core.presentation.FoundationFeature
+import com.healthtrackai.app.core.presentation.formatVietnameseInteger
 import kotlinx.coroutines.launch
 
-private val Teal = Color(0xFF0F766E)
-private val Ink = Color(0xFF0F172A)
-private val Muted = Color(0xFF64748B)
+private val Teal: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+private val Ink: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val Muted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 @Composable
-fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = Modifier) {
+fun ProfileScreen(
+    onNavigate: (FoundationFeature) -> Unit,
+    isDarkMode: Boolean = false,
+    onDarkModeChange: (Boolean) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
     var waterRemindersEnabled by remember { mutableStateOf(true) }
     var heartRateAlertsEnabled by remember { mutableStateOf(true) }
     var demoModeEnabled by remember { mutableStateOf(true) }
@@ -72,6 +86,7 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
     var editingGoal by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val hapticFeedback = LocalHapticFeedback.current
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(
@@ -85,17 +100,17 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
             item {
                 Card(
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 ) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                            Surface(shape = CircleShape, color = Color(0xFFCCFBF1), modifier = Modifier.size(52.dp)) {
+                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(52.dp)) {
                                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Person, null, tint = Teal, modifier = Modifier.size(29.dp)) }
                             }
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text("Nguyễn Minh Anh", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Ink, maxLines = 1)
-                                Surface(shape = CircleShape, color = Color(0xFFECFDF5), modifier = Modifier.align(Alignment.Start)) {
+                                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.align(Alignment.Start)) {
                                     Text("Dữ liệu sức khỏe mẫu", Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = Teal, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                 }
                                 Text("28 tuổi · Nhóm máu O+", fontSize = 11.sp, color = Muted, maxLines = 1)
@@ -105,7 +120,7 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
                                 modifier = Modifier.widthIn(max = 106.dp),
                                 contentPadding = PaddingValues(horizontal = 7.dp, vertical = 7.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFECFDF5), contentColor = Teal),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = Teal),
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Icon(Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(17.dp))
@@ -113,14 +128,34 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
                                 }
                             }
                         }
-                        androidx.compose.material3.HorizontalDivider(color = Color(0xFFE2E8F0))
+                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             ProfileMetricColumn("172 cm", "Chiều cao", Modifier.weight(1f))
-                            Box(Modifier.width(1.dp).height(38.dp).background(Color(0xFFE2E8F0)))
+                            Box(Modifier.width(1.dp).height(38.dp).background(MaterialTheme.colorScheme.outlineVariant))
                             ProfileMetricColumn("68 kg", "Cân nặng", Modifier.weight(1f))
-                            Box(Modifier.width(1.dp).height(38.dp).background(Color(0xFFE2E8F0)))
+                            Box(Modifier.width(1.dp).height(38.dp).background(MaterialTheme.colorScheme.outlineVariant))
                             ProfileMetricColumn("23,0", "BMI · Tốt", Modifier.weight(1f))
                         }
+                    }
+                }
+            }
+            item {
+                Surface(
+                    Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("🔥", fontSize = 24.sp)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Chuỗi 7 ngày đạt mục tiêu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text("Duy trì thói quen nhỏ mỗi ngày", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                        Text("7 ngày", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -128,14 +163,14 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
             item {
                 Card(
                     shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 ) {
                     Column(Modifier.fillMaxWidth()) {
                         ProfileAccessRow("Hồ sơ sức khỏe", "Thông tin cá nhân và chỉ số cơ thể", Icons.Rounded.HealthAndSafety) {
                             onNavigate(FoundationFeature.HealthProfile)
                         }
-                        androidx.compose.material3.HorizontalDivider(Modifier.padding(start = 62.dp), color = Color(0xFFF1F5F9))
+                        androidx.compose.material3.HorizontalDivider(Modifier.padding(start = 62.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
                         ProfileAccessRow("Hồ sơ y tế", "Đơn thuốc, lần khám và dị ứng", Icons.Rounded.MedicalInformation) {
                             onNavigate(FoundationFeature.MedicalRecords)
                         }
@@ -144,40 +179,37 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
             }
             item { SectionTitle("Mục tiêu cá nhân", "Chạm vào mục tiêu để điều chỉnh") }
             item {
-                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color.White), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))) {
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                        GoalSettingRow("Mục tiêu bước chân", "${stepGoal} bước / ngày", Icons.Rounded.Tune) { editingGoal = "steps" }
-                        androidx.compose.material3.HorizontalDivider(color = Color(0xFFF1F5F9))
-                        GoalSettingRow("Mục tiêu uống nước", "${waterGoal} ml / ngày", Icons.Rounded.Tune) { editingGoal = "water" }
+                        GoalSettingRow("Mục tiêu bước chân", "${formatVietnameseInteger(stepGoal)} bước / ngày", Icons.Rounded.Tune) { editingGoal = "steps" }
+                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
+                        GoalSettingRow("Mục tiêu uống nước", "${formatVietnameseInteger(waterGoal)} ml / ngày", Icons.Rounded.Tune) { editingGoal = "water" }
                     }
                 }
             }
             item { SectionTitle("Cài đặt ứng dụng", "Bạn có thể đổi các lựa chọn bất cứ lúc nào") }
             item {
-                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color.White), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))) {
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         SwitchSettingRow("Nhắc nhở uống nước", "Nhận nhắc uống nước trong ngày", Icons.Rounded.NotificationsActive, waterRemindersEnabled) { waterRemindersEnabled = it }
-                        androidx.compose.material3.HorizontalDivider(color = Color(0xFFF1F5F9))
+                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
                         SwitchSettingRow("Cảnh báo nhịp tim", "Hiển thị cảnh báo nhịp tim mẫu", Icons.Rounded.FavoriteBorder, heartRateAlertsEnabled) { heartRateAlertsEnabled = it }
-                        androidx.compose.material3.HorizontalDivider(color = Color(0xFFF1F5F9))
+                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
                         SwitchSettingRow("Chế độ dữ liệu mẫu", "Dùng số liệu minh họa trên thiết bị", Icons.Rounded.Person, demoModeEnabled) { demoModeEnabled = it }
+                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
+                        SwitchSettingRow("Giao diện Tối", "Nền xanh đen dịu mắt khi dùng buổi tối", Icons.Rounded.Bedtime, isDarkMode, onDarkModeChange)
                     }
                 }
             }
             item {
-                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFECFDF5))) {
-                    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = RoundedCornerShape(12.dp), color = Color.White, modifier = Modifier.size(42.dp)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Assessment, null, tint = Teal) } }
-                        Column(Modifier.weight(1f)) {
-                            Text("Xuất báo cáo PDF", fontWeight = FontWeight.Bold, color = Ink)
-                            Text("Xem trước báo cáo từ dữ liệu mẫu", fontSize = 12.sp, color = Muted)
-                        }
-                        Button(
-                            onClick = { scope.launch { snackbarHostState.showSnackbar("Bản xem trước báo cáo PDF mẫu đã sẵn sàng.") } },
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) { Text("Xuất PDF", fontSize = 11.sp, maxLines = 1) }
-                    }
+                OutlinedButton(
+                    onClick = { scope.launch { snackbarHostState.showSnackbar("Đã tạo bản xem trước báo cáo sức khỏe!") } },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Icon(Icons.Rounded.FileDownload, contentDescription = null)
+                    androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+                    Text("Xuất báo cáo sức khỏe (PDF)", maxLines = 1)
                 }
             }
             item { Text("Thông tin trong hồ sơ hiện là dữ liệu giả lập, chưa được đồng bộ với máy chủ.", Modifier.fillMaxWidth().padding(vertical = 4.dp), fontSize = 12.sp, color = Muted, textAlign = TextAlign.Center) }
@@ -190,13 +222,33 @@ fun ProfileScreen(onNavigate: (FoundationFeature) -> Unit, modifier: Modifier = 
         var sliderValue by remember(goal) { mutableStateOf(initial) }
         val isSteps = goal == "steps"
         val range = if (isSteps) 2_000f..20_000f else 500f..4_000f
+        val sliderStep = if (isSteps) 1_000 else 250
+        var lastFeedbackStep by remember(goal) {
+            mutableIntStateOf(((sliderValue - range.start) / sliderStep).toInt())
+        }
         AlertDialog(
             onDismissRequest = { editingGoal = null },
             title = { Text(if (isSteps) "Mục tiêu bước chân" else "Mục tiêu uống nước") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(if (isSteps) "${sliderValue.toInt()} bước mỗi ngày" else "${sliderValue.toInt()} ml mỗi ngày", color = Teal, fontWeight = FontWeight.Bold)
-                    Slider(value = sliderValue, onValueChange = { sliderValue = it }, valueRange = range, steps = if (isSteps) 17 else 13)
+                    Text(
+                        if (isSteps) "${formatVietnameseInteger(sliderValue.toInt())} bước mỗi ngày" else "${formatVietnameseInteger(sliderValue.toInt())} ml mỗi ngày",
+                        color = Teal,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { value ->
+                            sliderValue = value
+                            val currentStep = ((value - range.start) / sliderStep).toInt()
+                            if (currentStep != lastFeedbackStep) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                lastFeedbackStep = currentStep
+                            }
+                        },
+                        valueRange = range,
+                        steps = if (isSteps) 17 else 13,
+                    )
                     Text("Bạn có thể thay đổi mục tiêu này sau.", color = Muted, fontSize = 12.sp)
                 }
             },
@@ -227,7 +279,7 @@ private fun ProfileAccessRow(title: String, subtitle: String, icon: ImageVector,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Surface(shape = CircleShape, color = Color(0xFFECFDF5), modifier = Modifier.size(38.dp)) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(38.dp)) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = null, tint = Teal, modifier = Modifier.size(20.dp))
             }
@@ -238,7 +290,7 @@ private fun ProfileAccessRow(title: String, subtitle: String, icon: ImageVector,
         }
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = Color(0xFFECFDF5),
+            color = MaterialTheme.colorScheme.secondaryContainer,
             modifier = Modifier.clickable(onClick = onClick),
         ) {
             Text("Xem", Modifier.padding(horizontal = 13.dp, vertical = 8.dp), color = Teal, fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -256,17 +308,23 @@ private fun SectionTitle(title: String, subtitle: String) {
 
 @Composable
 private fun GoalSettingRow(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Surface(shape = RoundedCornerShape(11.dp), color = Color(0xFFCCFBF1), modifier = Modifier.size(38.dp)) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = Teal, modifier = Modifier.size(19.dp)) } }
+    Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Surface(shape = RoundedCornerShape(11.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(38.dp)) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = Teal, modifier = Modifier.size(19.dp)) } }
         Column(Modifier.weight(1f)) { Text(title, fontWeight = FontWeight.SemiBold, color = Ink); Text(value, fontSize = 12.sp, color = Muted) }
-        Text("›", fontSize = 24.sp, color = Muted)
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            modifier = Modifier.clickable(onClick = onClick),
+        ) {
+            Text("Sửa", Modifier.padding(horizontal = 13.dp, vertical = 8.dp), color = Teal, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
 @Composable
 private fun SwitchSettingRow(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Surface(shape = RoundedCornerShape(11.dp), color = Color(0xFFF1F5F9), modifier = Modifier.size(38.dp)) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = Teal, modifier = Modifier.size(19.dp)) } }
+        Surface(shape = RoundedCornerShape(11.dp), color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.size(38.dp)) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = Teal, modifier = Modifier.size(19.dp)) } }
         Column(Modifier.weight(1f)) { Text(title, fontWeight = FontWeight.SemiBold, color = Ink); Text(subtitle, fontSize = 11.sp, color = Muted) }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }

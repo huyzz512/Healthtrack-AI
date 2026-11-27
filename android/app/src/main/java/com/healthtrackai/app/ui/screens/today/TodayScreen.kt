@@ -27,17 +27,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,30 +57,59 @@ import androidx.compose.ui.unit.sp
 import com.healthtrackai.app.model.MockTimelineEntry
 import com.healthtrackai.app.model.mockTimelineEntries
 import com.healthtrackai.app.ui.components.HealthScreenHeader
+import com.healthtrackai.app.ui.components.ConfettiCelebration
 import java.time.LocalDate
 import java.time.format.TextStyle
-import java.text.NumberFormat
 import java.util.Locale
+import com.healthtrackai.app.core.presentation.AnimatedCounter
+import com.healthtrackai.app.core.presentation.animateFromZeroFloatAsState
+import kotlinx.coroutines.launch
 
-private val Teal = Color(0xFF0F766E)
-private val Ink = Color(0xFF0F172A)
-private val Muted = Color(0xFF64748B)
+private val Teal: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+private val Ink: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val Muted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 @Composable
 fun TodayScreen(modifier: Modifier = Modifier) {
     val today = remember { LocalDate.now() }
     var selectedDate by remember { mutableStateOf(today) }
     var waterMl by remember { mutableStateOf(1_500) }
+    var waterGoalCelebrated by remember { mutableStateOf(false) }
+    var celebrationActive by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
     val entries = remember { mutableStateListOf<MockTimelineEntry>().apply { addAll(mockTimelineEntries) } }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val dayValue = selectedDate.dayOfMonth
     val dailySteps = if (selectedDate == today) 6_420 else 4_200 + (dayValue * 173 % 3_800)
     val dailyCalories = if (selectedDate == today) 1_450 else 1_000 + (dayValue * 47 % 900)
+    val hapticFeedback = LocalHapticFeedback.current
+    fun addWater250Ml() {
+        val updatedWater = (waterMl + 250).coerceAtMost(2_000)
+        waterMl = updatedWater
+        if (updatedWater >= 2_000 && !waterGoalCelebrated) {
+            waterGoalCelebrated = true
+            celebrationActive = true
+            scope.launch { snackbarHostState.showSnackbar("Chúc mừng! Bạn đã hoàn thành mục tiêu uống nước.") }
+        }
+    }
+    val animatedCaloriesProgress by animateFromZeroFloatAsState(
+        targetValue = (dailyCalories / 2_000f).coerceIn(0f, 1f),
+        animationKey = selectedDate,
+        label = "today-calories-progress",
+    )
+    val animatedWaterProgress by animateFromZeroFloatAsState(
+        targetValue = (waterMl / 2_000f).coerceIn(0f, 1f),
+        label = "today-water-progress",
+    )
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, top = 20.dp, end = 18.dp, bottom = 80.dp),
+            contentPadding = PaddingValues(start = 18.dp, top = 20.dp, end = 18.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
@@ -94,41 +128,78 @@ fun TodayScreen(modifier: Modifier = Modifier) {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Surface(shape = CircleShape, color = Color(0xFFCCFBF1)) {
+                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
                         Text("DỮ LIỆU MẪU", Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = Teal, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
             item {
-                Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(1.dp)) {
-                    Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(1.dp)) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(PaddingValues(start = 18.dp, top = 18.dp, end = 18.dp, bottom = 28.dp)),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
                         Text("Mục tiêu hôm nay", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Ink)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             Box(contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(
-                                    progress = { (dailyCalories / 2_000f).coerceIn(0f, 1f) },
+                                    progress = { animatedCaloriesProgress },
                                     modifier = Modifier.size(72.dp),
                                     color = Color(0xFF2563EB),
                                     trackColor = Color(0xFFDBEAFE),
                                     strokeWidth = 7.dp,
                                 )
-                                Text("${(dailyCalories * 100 / 2_000)}%", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                                AnimatedCounter(
+                                    value = dailyCalories * 100 / 2_000,
+                                    suffix = "%",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF2563EB),
+                                    ),
+                                )
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text("Năng lượng", fontWeight = FontWeight.SemiBold, color = Ink)
-                                Text("${dailyCalories} / 2.000 kcal", fontSize = 12.sp, color = Muted)
+                                AnimatedCounter(
+                                    value = dailyCalories,
+                                    suffix = " / 2.000 kcal",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = Muted),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    animationKey = selectedDate,
+                                )
                             }
                         }
-                        GoalProgressRow("Số bước", "%,d / 8.000 bước".format(dailySteps), (dailySteps / 8_000f).coerceIn(0f, 1f), Color(0xFFE11D48))
+                        GoalProgressRow(
+                            title = "Số bước",
+                            currentValue = dailySteps,
+                            suffix = " / 8.000 bước",
+                            progress = (dailySteps / 8_000f).coerceIn(0f, 1f),
+                            color = Color(0xFFE11D48),
+                            animationKey = selectedDate,
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Icon(Icons.Rounded.WaterDrop, null, tint = Color(0xFF2563EB), modifier = Modifier.size(22.dp))
                             Column(Modifier.weight(1f)) {
                                 Text("Nước uống", fontWeight = FontWeight.SemiBold, color = Ink)
-                                Text("${NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(waterMl)} / 2.000 ml", fontSize = 12.sp, color = Muted)
+                                AnimatedCounter(
+                                    value = waterMl,
+                                    suffix = " / 2.000 ml",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = Muted),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             }
-                            TextButton(onClick = { waterMl = (waterMl + 250).coerceAtMost(2_000) }, enabled = waterMl < 2_000) { Text("+250ml") }
+                            TextButton(
+                                onClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.KeyboardTap)
+                                    addWater250Ml()
+                                },
+                                enabled = waterMl < 2_000,
+                            ) { Text("+250ml") }
                         }
-                        LinearProgressIndicator(progress = { waterMl / 2_000f }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = Color(0xFF2563EB), trackColor = Color(0xFFDBEAFE))
+                        LinearProgressIndicator(progress = { animatedWaterProgress }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = Color(0xFF2563EB), trackColor = Color(0xFFDBEAFE))
                     }
                 }
             }
@@ -141,15 +212,18 @@ fun TodayScreen(modifier: Modifier = Modifier) {
             items(entries, key = { it.id }) { entry -> TimelineRow(entry) }
             item { Text("Các số liệu và bản ghi trên là dữ liệu giả lập để trình diễn giao diện.", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(vertical = 4.dp)) }
         }
-        FloatingActionButton(
+        ExtendedFloatingActionButton(
             onClick = { showAddDialog = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(end = 20.dp, bottom = 18.dp),
             containerColor = Teal,
-            contentColor = Color.White,
-        ) {
-            Icon(Icons.Rounded.Add, contentDescription = "Ghi nhận nhanh")
-            Text(" Ghi nhận", modifier = Modifier.padding(end = 14.dp), fontWeight = FontWeight.SemiBold)
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+            text = { Text("Ghi nhận", maxLines = 1, fontWeight = FontWeight.SemiBold) },
+        )
+        if (celebrationActive) {
+            ConfettiCelebration(active = true, onFinished = { celebrationActive = false })
         }
+        SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
     }
 
     if (showAddDialog) {
@@ -168,7 +242,8 @@ fun TodayScreen(modifier: Modifier = Modifier) {
                         showAddDialog = false
                     }
                     AddRecordButton("Uống nước · 250 ml", Icons.Rounded.WaterDrop) {
-                        waterMl = (waterMl + 250).coerceAtMost(2_000)
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.KeyboardTap)
+                        addWater250Ml()
                         entries.add(MockTimelineEntry(System.currentTimeMillis(), "${java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}", "Uống nước", "250 ml · Bản ghi vừa thêm", "water"))
                         showAddDialog = false
                     }
@@ -187,8 +262,8 @@ private fun WeekCalendarStrip(today: LocalDate, selectedDate: LocalDate, onSelec
             Surface(
                 modifier = Modifier.weight(1f).clickable { onSelect(date) },
                 shape = RoundedCornerShape(18.dp),
-                color = if (selected) Teal else Color.White,
-                border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                color = if (selected) Teal else MaterialTheme.colorScheme.surface,
+                border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.forLanguageTag("vi")).take(2), fontSize = 10.sp, color = if (selected) Color.White.copy(.85f) else Muted)
@@ -200,13 +275,32 @@ private fun WeekCalendarStrip(today: LocalDate, selectedDate: LocalDate, onSelec
 }
 
 @Composable
-private fun GoalProgressRow(title: String, value: String, progress: Float, color: Color) {
+private fun GoalProgressRow(
+    title: String,
+    currentValue: Int,
+    suffix: String,
+    progress: Float,
+    color: Color,
+    animationKey: Any,
+) {
+    val animatedProgress by animateFromZeroFloatAsState(
+        targetValue = progress,
+        animationKey = animationKey,
+        label = "today-steps-progress",
+    )
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(title, fontWeight = FontWeight.SemiBold, color = Ink)
-            Text(value, fontSize = 12.sp, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            AnimatedCounter(
+                value = currentValue,
+                suffix = suffix,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = Muted),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                animationKey = animationKey,
+            )
         }
-        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = color, trackColor = color.copy(alpha = .12f))
+        LinearProgressIndicator(progress = { animatedProgress }, modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape), color = color, trackColor = color.copy(alpha = .12f))
     }
 }
 
@@ -220,9 +314,9 @@ private fun TimelineRow(entry: MockTimelineEntry) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Surface(shape = CircleShape, color = background, modifier = Modifier.size(40.dp)) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp)) } }
-            Spacer(Modifier.height(34.dp).padding(top = 2.dp).background(Color(0xFFE2E8F0)).size(width = 1.dp, height = 34.dp))
+            Spacer(Modifier.height(34.dp).padding(top = 2.dp).background(MaterialTheme.colorScheme.outlineVariant).size(width = 1.dp, height = 34.dp))
         }
-        Card(Modifier.weight(1f), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+        Card(Modifier.weight(1f), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(entry.title, fontWeight = FontWeight.SemiBold, color = Ink)

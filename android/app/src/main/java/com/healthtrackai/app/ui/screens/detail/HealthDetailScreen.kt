@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,9 +45,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.healthtrackai.app.core.presentation.FoundationFeature
 
-private val Ink = Color(0xFF0F172A)
-private val Muted = Color(0xFF64748B)
-private val Teal = Color(0xFF0F766E)
+private val Ink: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val Muted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+private val Teal: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
 
 private data class DetailMetric(val label: String, val value: String, val note: String)
 
@@ -54,9 +59,10 @@ private data class DetailMetric(val label: String, val value: String, val note: 
 fun HealthDetailScreen(feature: FoundationFeature?, onBack: () -> Unit) {
     val title = feature?.title ?: "Chi tiết sức khỏe"
     val (icon, accent, tint, summary, metrics) = detailContent(feature)
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
     Scaffold(
-        containerColor = Color(0xFFF7F9FC),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold) },
@@ -65,7 +71,7 @@ fun HealthDetailScreen(feature: FoundationFeature?, onBack: () -> Unit) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F9FC)),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
@@ -77,19 +83,19 @@ fun HealthDetailScreen(feature: FoundationFeature?, onBack: () -> Unit) {
             item {
                 Card(
                     shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = tint),
+                    colors = CardDefaults.cardColors(containerColor = if (isDark) MaterialTheme.colorScheme.surfaceVariant else tint),
                 ) {
                     Row(
                         Modifier.fillMaxWidth().padding(18.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Surface(shape = RoundedCornerShape(14.dp), color = Color.White) {
+                        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface) {
                             Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.padding(10.dp))
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Ink)
-                            Text(summary, fontSize = 13.sp, color = Color(0xFF334155), lineHeight = 19.sp)
+                            Text(summary, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 19.sp)
                         }
                     }
                 }
@@ -101,7 +107,7 @@ fun HealthDetailScreen(feature: FoundationFeature?, onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text("Thông tin gần đây", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Ink)
-                    Surface(shape = CircleShape, color = Color(0xFFCCFBF1)) {
+                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
                         Text("Dữ liệu mẫu", Modifier.padding(horizontal = 10.dp, vertical = 5.dp), color = Teal, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
@@ -109,8 +115,8 @@ fun HealthDetailScreen(feature: FoundationFeature?, onBack: () -> Unit) {
             items(metrics) { metric ->
                 Card(
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 ) {
                     Column(
                         Modifier.fillMaxWidth().padding(16.dp),
@@ -134,6 +140,7 @@ fun HealthDetailScreen(feature: FoundationFeature?, onBack: () -> Unit) {
     }
 }
 
+@Composable
 private fun detailContent(
     feature: FoundationFeature?,
 ): DetailContent = when (feature) {

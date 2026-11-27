@@ -1,8 +1,8 @@
 # Phân tích yêu cầu và đề xuất UI/UX Android
 
 **Trạng thái:** Bản làm việc của Thành viên 1  
-**Phạm vi:** Phần 1 – Phân tích yêu cầu; Phần 2 – UI/UX  
-**Cập nhật:** 20-11-2026
+**Phạm vi:** Phân tích yêu cầu, UI/UX và triển khai/đánh giá phía Android theo phân công Thành viên 1
+**Cập nhật:** 27-11-2026
 
 Tài liệu này xác định phần việc Android của Thành viên 1. Đây là tài liệu phân tích và thiết kế sơ bộ, chưa phải phê duyệt triển khai các luồng nghiệp vụ UC-01 đến UC-20. Thành viên 2 đang hoàn thiện Foundation v0.1 theo thông tin phân công; Thành viên 1 không chỉnh sửa Backend, database, Swagger/OpenAPI hoặc contract chung.
 
@@ -10,7 +10,7 @@ Tài liệu này xác định phần việc Android của Thành viên 1. Đây 
 
 ### 1.1. Phạm vi Foundation
 
-Foundation v0.1 xây nền tảng kỹ thuật và quy trình để hệ thống có kiến trúc rõ ràng, build/test được và sẵn sàng cho các nghiệp vụ sau này. Foundation không bao gồm hoàn thiện toàn bộ UC-01 đến UC-20. Vì Thành viên 2 đang xử lý Foundation, phần việc hiện tại của Thành viên 1 là làm rõ yêu cầu Android và chuẩn bị thiết kế UI/UX; không làm trùng các hạng mục Foundation do Thành viên 2 phụ trách.
+Foundation v0.1 đã được nghiệm thu VERIFIED/COMPLETE theo [trạng thái dự án](../governance/project-status.md). Theo phân công hiện hành, Thành viên 1 phụ trách Android UI/UX, cấu trúc Android, MVVM/điều hướng, tích hợp JWT phía ứng dụng, giao diện CRUD và Dashboard/biểu đồ; Thành viên 2 phụ trách REST API, xác thực phía máy chủ, persistence và các API CRUD/thống kê. Công việc Android chỉ tích hợp theo contract đã công bố, không thay đổi API dùng chung hoặc tự hoàn thiện toàn bộ UC-01 đến UC-20.
 
 ### 1.2. Tài liệu đã đối chiếu trong repository
 
@@ -24,9 +24,9 @@ Foundation v0.1 xây nền tảng kỹ thuật và quy trình để hệ thống
 
 ### 1.3. Điểm cần đối chiếu về trạng thái dự án
 
-Thông tin phân công mới nhất cho biết Foundation đang dừng ở Phase L; OQ-012, CI và nghiệm thu cuối còn thiếu. Một số tài liệu hiện có trong repository lại ghi OQ-012 đã giải quyết, CI đã chạy và Foundation v0.1 đã VERIFIED/COMPLETE vào ngày 20-11-2026. Đây là mâu thuẫn về trạng thái, cần Integration Owner và hai thành viên xác nhận trước khi dùng làm căn cứ nghiệm thu. Tài liệu Android này không tự sửa trạng thái hoặc hồ sơ governance dùng chung.
+Trạng thái hiện hành trong governance ghi Foundation v0.1 đã hoàn tất, OQ-012 đã được giải quyết và CI nền tảng đã chạy. Backend Phase 1 đã có implementation candidate; Android review và nghiệm thu chung theo CCR-002 vẫn đang chờ. Tài liệu Android này không tự đánh dấu phê duyệt thay cho hai bên.
 
-Governance nhắc tới tài liệu phân tích nghiệp vụ đã duyệt `HealthTrack_AI_Hoan_thien_phan_tich_v0.2.docx`, hiện chưa có trong repository. Người dùng đã cung cấp `Nhóm 1-HealthTrack_AL.docx`, tài liệu mang nhãn đề xuất v0.1, ngày 20-10-2026. Tài liệu được dùng làm căn cứ làm việc cho UC-13 ở bản hiện tại; chưa coi nó là bản thay thế v0.2 đã duyệt. Trước khi triển khai thêm use case, cần xác nhận phiên bản nghiệp vụ chính thức và đối chiếu hợp đồng API đã phát hành.
+Tài liệu phân tích nghiệp vụ đã duyệt v0.2 nằm ngoài repository; checksum và traceability được ghi trong kế hoạch Backend Phase 1. Không dùng bản đề xuất v0.1 làm căn cứ thay thế. Trước khi triển khai thêm use case, cần đối chiếu tài liệu đã duyệt và contract API hiện hành.
 
 ### 1.4. Phần Android đã bắt đầu triển khai
 
@@ -36,9 +36,21 @@ Màn Tổng quan sử dụng `androidx.compose.material:material-icons-extended`
 
 Room có migration v1→v2 cho bảng bản ghi cục bộ dùng chung. Hồ sơ sức khỏe, chỉ số cơ thể, dấu hiệu sinh tồn, dinh dưỡng và hoạt động hỗ trợ thêm, sửa, xóa bản ghi cục bộ; nhật ký cảm xúc hỗ trợ ghi nhận, xem lịch sử, sửa và xóa trên thiết bị. Những dữ liệu này chưa đồng bộ lên Backend. Theo UC-13 trong tài liệu đề xuất `Nhóm 1-HealthTrack_AL.docx`, cảm xúc có năm lựa chọn, ghi chú tùy chọn, validation bắt buộc và không đưa ra chẩn đoán.
 
-Đăng nhập vẫn chỉ có giao diện/validation: chưa gọi API hoặc tạo phiên. Contract liệt kê các đường dẫn auth dạng dự kiến, nhưng OpenAPI/Backend hiện chỉ triển khai `GET /api/v1/health`. Đăng ký, khôi phục mật khẩu, nhắc lịch OS, tải tệp y tế, Health Connect permission/read/sync, phân tích từ dữ liệu, tạo PDF và hội thoại AI chưa hoạt động hoàn chỉnh vì thiếu API nghiệp vụ hoặc tích hợp Android tương ứng. Health Connect hiện chỉ kiểm tra khả năng SDK. Không báo thành công cho thao tác phụ thuộc các dịch vụ chưa có. APK build thành công và cài trên LDPlayer `127.0.0.1:5555`; đã mở màn chỉ số cơ thể sau migration và lưu thử bản ghi cục bộ. Đây là các luồng cục bộ đang hoạt động cùng những phần giao diện còn chờ tích hợp, chưa phải ứng dụng hoàn thiện toàn bộ nghiệp vụ.
+Android đã tích hợp các endpoint Auth/Users trong CCR-002 candidate: đăng nhập, đăng ký/xác minh OTP, khôi phục/đặt lại mật khẩu, refresh/logout, tải hồ sơ và cập nhật họ tên. Access/refresh token được mã hóa AES-GCM bằng Android Keystore và lưu qua DataStore; refresh được tuần tự hóa phía client. Đây mới là tích hợp ứng viên, chưa phải nghiệm thu chung. OTP provider hiện là mock, không gửi hoặc tiết lộ mã thật nên không thể xác minh thủ công trọn luồng đăng ký/khôi phục.
 
-Debug Android dùng `http://10.0.2.2:3000/api/v1/` để gọi Backend trên máy phát triển; có thể thay bằng `-PhealthtrackApiBaseUrl=...`. HTTP cleartext chỉ được cho phép ở build debug. Build release vẫn cần URL HTTPS thật được bàn giao, hiện giá trị mặc định là địa chỉ không định tuyến `api.invalid`.
+OpenAPI hiện chỉ có API health, auth và users; chưa có API CRUD sức khỏe hoặc thống kê Dashboard. Vì vậy các CRUD sức khỏe chỉ lưu cục bộ và Dashboard/biểu đồ vẫn là dữ liệu trình diễn có nhãn, không phải dữ liệu máy chủ. Nhắc lịch hệ điều hành, Health Connect read/sync, tải tệp, PDF thật và hội thoại AI còn phụ thuộc API/provider hoặc tích hợp được duyệt; UI không được báo các thao tác đó đã hoàn thành khi chưa có dịch vụ tương ứng.
+
+Debug Android mặc định dùng `http://127.0.0.1:3001/api/v1/`; có thể thay bằng `-PhealthtrackApiBaseUrl=...` hoặc `HEALTHTRACK_API_BASE_URL`. Với LDPlayer, cần cấu hình `adb reverse` theo hướng dẫn khởi chạy. HTTP cleartext chỉ được cho phép ở build debug. Build release vẫn cần URL HTTPS thật được bàn giao; fallback hiện là địa chỉ không định tuyến `api.invalid`.
+
+### 1.5. Trạng thái theo phân công Thành viên 1
+
+| Hạng mục | Trạng thái Android | Việc còn lại / phụ thuộc |
+|---|---|---|
+| UI/UX, Android project, MVVM và điều hướng | Có các màn hình Compose, ViewModel/UDF, điều hướng Dashboard/Auth/Account và giao diện CRUD cục bộ. | Tiếp tục theo use case được duyệt; không coi giao diện cục bộ là đồng bộ máy chủ. |
+| Đăng nhập Android và JWT | Auth/Users API candidate được nối; token lưu mã hóa; refresh được tuần tự hóa; luồng khôi phục được kiểm thử trên thiết bị với danh tính tổng hợp. | Android review và nghiệm thu chung CCR-002 còn mở; chưa xác minh đăng nhập bằng tài khoản test hợp lệ hoặc nhận OTP thật. |
+| CRUD giao diện | Các bản ghi sức khỏe hỗ trợ CRUD cục bộ trên Android. | API CRUD sức khỏe chưa có trong OpenAPI; cần Backend bàn giao contract trước khi tích hợp đồng bộ. |
+| Dashboard và biểu đồ | Giao diện và biểu đồ tương tác đã có; dữ liệu mẫu được gắn nhãn. | API tổng hợp/thống kê chưa có; giữ nhãn demo, không trình bày dữ liệu mẫu như số liệu máy chủ. |
+| Kiểm thử tích hợp và tài liệu Android | Build, unit test, lint; kiểm thử trên LDPlayer cho giao diện và luồng khôi phục mẫu; tài liệu Android được cập nhật. | Kiểm thử auth đầy đủ cần tài khoản hợp lệ và OTP provider có thể nhận mã; demo nghiệp vụ cần dữ liệu/API được duyệt. |
 
 ## 2. Phạm vi công việc của Thành viên 1
 
@@ -68,7 +80,7 @@ Debug Android dùng `http://10.0.2.2:3000/api/v1/` để gọi Backend trên má
 | Kiến trúc màn hình | Presentation → Domain → Data; ViewModel giữ trạng thái và phát sự kiện; UI không gọi trực tiếp Retrofit, Room hoặc Health Connect. | Android architecture và quy tắc Android. | Mọi thao tác UI đi qua event/ViewModel/use case/repository phù hợp. |
 | Điều hướng | Xác định điểm vào, đường đi, quay lại và trạng thái đăng nhập cho mỗi màn hình. | Navigation Foundation hiện có; yêu cầu nghiệp vụ cần đối chiếu. | Không có màn hình mồ côi; đích đến không hợp lệ được xử lý an toàn. |
 | Trạng thái dùng chung | Thiết kế trạng thái đang tải, có dữ liệu, rỗng, lỗi, offline, không khả dụng và cần quyền khi phù hợp. | `LoadableState.kt`, `android/AGENTS.md`. | Mỗi màn hình có nội dung giải thích và hành động khôi phục phù hợp. |
-| Đăng nhập/đăng ký | Thiết kế form, validation, OTP, quên/đặt lại mật khẩu và trạng thái phiên; chỉ tích hợp khi endpoint đã sẵn sàng. | Contract có quy tắc auth và các đường dẫn chuẩn bị; luồng chưa được xác nhận là đã triển khai. | Không tự thêm trường; không ghi log password, OTP hoặc token; xử lý theo status/error code. |
+| Đăng nhập/đăng ký | Form, validation, OTP, quên/đặt lại mật khẩu và trạng thái phiên; tích hợp Android theo API candidate đã công bố. | CCR-002/OpenAPI có Auth/Users Phase 1; nghiệm thu chung còn chờ, OTP provider vẫn là mock. | Không tự thêm trường; không ghi log password, OTP hoặc token; xử lý theo status/error code; xác minh luồng hồi phục theo đúng endpoint. |
 | CRUD giao diện | Danh sách, chi tiết, tạo mới và chỉnh sửa theo từng nghiệp vụ được ưu tiên. | Use-case map; API/DTO nghiệp vụ cần được Backend cung cấp. | Trường và validation có căn cứ; lỗi server hiển thị rõ; phân biệt bản ghi nhập tay với bản ghi nhập từ thiết bị. |
 | Dashboard/biểu đồ | Hiển thị dữ liệu tổng hợp do Backend cung cấp, đúng đơn vị và khoảng thời gian. | Contract quy định Backend tổng hợp, Android hiển thị. | Không tạo dữ liệu sức khỏe giả; dữ liệu thiếu thể hiện là thiếu, không thay bằng 0. |
 | Health Connect | Trình bày trạng thái khả dụng/quyền; đọc, ánh xạ và cache trên Android; bảo toàn provenance. | ADR-004, contract và `data-provenance.md`; DTO đồng bộ cần duyệt chung. | Từ chối quyền không làm hỏng chức năng khác; không sửa bản ghi Health Connect thành dữ liệu nhập tay. |

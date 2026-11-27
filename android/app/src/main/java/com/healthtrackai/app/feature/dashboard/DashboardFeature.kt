@@ -1,5 +1,8 @@
 package com.healthtrackai.app.feature.dashboard
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -194,6 +197,8 @@ private fun dashboardViewModel(): DashboardViewModel {
 @Composable
 fun DashboardRoute(
     onNavigate: (FoundationFeature) -> Unit,
+    isDarkMode: Boolean = false,
+    onDarkModeChange: (Boolean) -> Unit = {},
     viewModel: DashboardViewModel = dashboardViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -210,6 +215,8 @@ fun DashboardRoute(
         DashboardScreen(
             state = state,
             onEvent = viewModel::onEvent,
+            isDarkMode = isDarkMode,
+            onDarkModeChange = onDarkModeChange,
             modifier = Modifier.padding(padding),
         )
     }
@@ -219,6 +226,8 @@ fun DashboardRoute(
 fun DashboardScreen(
     state: DashboardUiState,
     onEvent: (DashboardUiEvent) -> Unit,
+    isDarkMode: Boolean = false,
+    onDarkModeChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val tabsNavController = rememberNavController()
@@ -291,7 +300,7 @@ fun DashboardScreen(
                             Box(
                                 modifier = Modifier.size(width = 52.dp, height = 28.dp)
                                     .clip(RoundedCornerShape(50))
-                                    .background(if (selected) Color(0xFFCCFBF1) else Color.Transparent),
+                                    .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(dashboardTabIcon(tab, selected), contentDescription = null, modifier = Modifier.size(22.dp))
@@ -300,10 +309,10 @@ fun DashboardScreen(
                         label = { Text(tab.title, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         colors = NavigationBarItemDefaults.colors(
                             indicatorColor = Color.Transparent,
-                            selectedIconColor = Color(0xFF0F766E),
-                            selectedTextColor = Color(0xFF0F766E),
-                            unselectedIconColor = Color(0xFF64748B),
-                            unselectedTextColor = Color(0xFF64748B),
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     )
                 }
@@ -314,11 +323,21 @@ fun DashboardScreen(
             navController = tabsNavController,
             startDestination = DashboardTab.HOME.route,
             modifier = Modifier.padding(innerPadding).fillMaxSize(),
+            enterTransition = { fadeIn(animationSpec = tween(220)) },
+            exitTransition = { fadeOut(animationSpec = tween(220)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(220)) },
+            popExitTransition = { fadeOut(animationSpec = tween(220)) },
         ) {
             composable(DashboardTab.HOME.route) { OverviewScreen(state, onEvent, navigateToFeature) }
             composable(DashboardTab.TODAY.route) { TodayScreen() }
             composable(DashboardTab.SOURCES.route) { InsightsScreen() }
-            composable(DashboardTab.PROFILE.route) { ProfileScreen(onNavigate = navigateToFeature) }
+            composable(DashboardTab.PROFILE.route) {
+                ProfileScreen(
+                    onNavigate = navigateToFeature,
+                    isDarkMode = isDarkMode,
+                    onDarkModeChange = onDarkModeChange,
+                )
+            }
             composable(
                 route = "detail/{featureRoute}",
                 arguments = listOf(navArgument("featureRoute") { type = NavType.StringType }),
